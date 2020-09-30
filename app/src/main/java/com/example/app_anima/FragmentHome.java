@@ -9,7 +9,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -22,12 +21,14 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
 
+import com.dinuscxj.progressbar.CircleProgressBar;
+
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class FragmentHome extends Fragment {
-    private Button btn_test;
+
     private ImageButton btn_menu;
     private ScrollView scrollView;
     private LinearLayout appbar, vp_layout;
@@ -41,17 +42,22 @@ public class FragmentHome extends Fragment {
     final long DELAY_MS = 500;//delay in milliseconds before task is to be executed
     final long PERIOD_MS = 3000; // time in milliseconds between successive task executions.
     private DrawerLayout drawer;
+    private static final String DEFAULT_PATTERN = "%d%%";
+    private CircleProgressBar circleProgressBar;
 
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         ViewGroup viewGroup = (ViewGroup) inflater.inflate(R.layout.fragment_home, container, false);
 
-        btn_test = (Button) viewGroup.findViewById(R.id.button2);
+
         btn_menu = (ImageButton) viewGroup.findViewById(R.id.btn_menu);
         scrollView = (ScrollView) viewGroup.findViewById(R.id.sv_main);
         appbar = (LinearLayout) viewGroup.findViewById(R.id.appbar);
         tv_menu = (TextView) viewGroup.findViewById(R.id.tv_menu);
         viewPager = (ViewPager) viewGroup.findViewById(R.id.viewPager);
         vp_layout = (LinearLayout) viewGroup.findViewById(R.id.vp_layout);
+        circleProgressBar = (CircleProgressBar) viewGroup.findViewById(R.id.cpb_circlebar);
+        circleProgressBar.setProgress(70);
+
 
         //drawer
         drawer = (DrawerLayout) viewGroup.findViewById(R.id.drawer) ;
@@ -126,5 +132,9 @@ public class FragmentHome extends Fragment {
     public void onPause() {
         super.onPause();
         timer.cancel();
+    }
+
+    public CharSequence format(int progress, int max) {
+        return String.format(DEFAULT_PATTERN, (int) ((float) progress / (float) max * 100));
     }
 }

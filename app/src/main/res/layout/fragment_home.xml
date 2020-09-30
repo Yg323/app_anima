@@ -38,11 +38,42 @@
                             android:layout_height="200dp" />
                     </LinearLayout>
 
-                    <Button
-                        android:id="@+id/button2"
+                    <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
-                        android:layout_height="400dp"
-                        android:text="Button 1" />
+                        android:layout_height="wrap_content"
+                        android:layout_margin="10dp"
+                        android:background="@drawable/box_large"
+                        android:id="@+id/running_km">
+
+                        <com.dinuscxj.progressbar.CircleProgressBar
+                            android:id="@+id/cpb_circlebar"
+                            android:layout_width="200dp"
+                            android:layout_height="200dp"
+                            android:layout_marginTop="50dp"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:progress_end_color="#DFB89A"
+                            app:progress_start_color="#E7D0C8"
+                            app:progress_stroke_cap="round"
+                            app:progress_stroke_width="15dp "
+                            app:progress_text_size="50sp"
+                            app:progress_text_color="#000000"
+                            app:style="solid_line" />
+
+                        <TextView
+                            android:id="@+id/go_jog"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="20dp"
+                            android:layout_marginBottom="50dp"
+                            android:text="산책을 시작해보세요!"
+                            android:textSize="20sp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toBottomOf="@+id/cpb_circlebar" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
 
                     <Button
                         android:id="@+id/button3"
@@ -102,14 +133,12 @@
                     android:text="ANIMA HEALTH" />
             </LinearLayout>
         </FrameLayout>
-        <TextView
-            android:layout_width="300dp"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:textSize="48sp"
-            android:text="수호야 안뇽"
-            android:background="#009688"
-            android:layout_gravity="left" />
+        <ListView
+        android:layout_width="300dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="left"
+        android:background="#FFC107"
+        android:id="@+id/drawer_menulist" />
     </androidx.drawerlayout.widget.DrawerLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
