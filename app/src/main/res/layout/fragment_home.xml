@@ -7,95 +7,109 @@
     android:layout_height="match_parent"
     android:background="#E7D0C8"
     tools:context=".FragmentHome">
-
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <ScrollView
-            android:id="@+id/sv_main"
+        app:layout_constraintTop_toTopOf="parent"
+        android:id="@+id/drawer">
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-            <LinearLayout
+            android:layout_height="match_parent"
+            >
+
+            <ScrollView
+                android:id="@+id/sv_main"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_height="match_parent">
                 <LinearLayout
-                    android:id="@+id/vp_layout"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-                    <androidx.viewpager.widget.ViewPager
-                        android:id="@+id/viewPager"
-                        android:layout_width="wrap_content"
-                        android:layout_height="200dp" />
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <LinearLayout
+                        android:id="@+id/vp_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+                        <androidx.viewpager.widget.ViewPager
+                            android:id="@+id/viewPager"
+                            android:layout_width="wrap_content"
+                            android:layout_height="200dp" />
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/button2"
+                        android:layout_width="match_parent"
+                        android:layout_height="400dp"
+                        android:text="Button 1" />
+
+                    <Button
+                        android:id="@+id/button3"
+                        android:layout_width="match_parent"
+                        android:layout_height="400dp"
+                        android:text="Button 2" />
+
+                    <Button
+                        android:id="@+id/button4"
+                        android:layout_width="match_parent"
+                        android:layout_height="400dp"
+                        android:text="Button 3" />
+
+                    <Button
+                        android:id="@+id/button5"
+                        android:layout_width="match_parent"
+                        android:layout_height="400dp"
+                        android:text="Button 2" />
+
+                    <Button
+                        android:id="@+id/button6"
+                        android:layout_width="match_parent"
+                        android:layout_height="100dp"
+                        android:text="Button 2" />
                 </LinearLayout>
 
-                <Button
-                    android:id="@+id/button2"
-                    android:layout_width="match_parent"
-                    android:layout_height="400dp"
-                    android:text="Button 1" />
 
-                <Button
-                    android:id="@+id/button3"
-                    android:layout_width="match_parent"
-                    android:layout_height="400dp"
-                    android:text="Button 2" />
-
-                <Button
-                    android:id="@+id/button4"
-                    android:layout_width="match_parent"
-                    android:layout_height="400dp"
-                    android:text="Button 3" />
-
-                <Button
-                    android:id="@+id/button5"
-                    android:layout_width="match_parent"
-                    android:layout_height="400dp"
-                    android:text="Button 2" />
-
-                <Button
-                    android:id="@+id/button6"
-                    android:layout_width="match_parent"
-                    android:layout_height="100dp"
-                    android:text="Button 2" />
+            </ScrollView>
+            <LinearLayout
+                android:id="@+id/appbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:layout_marginTop="0dp"
+                android:orientation="horizontal"
+                android:visibility="visible"
+                android:background="#00E7D0C8">
+                <ImageButton
+                    android:id="@+id/btn_menu"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="10dp"
+                    android:background="#00E7D0C8"
+                    android:tint="#FFFFFF"
+                    android:layout_gravity="center"
+                    android:src="@drawable/menubar_icon"/>
+                <TextView
+                    android:id="@+id/tv_menu"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="invisible"
+                    android:layout_marginLeft="10dp"
+                    android:background="#E7D0C8"
+                    android:layout_gravity="center"
+                    android:fontFamily="@font/tttogether"
+                    android:textSize="25dp"
+                    android:textColor="#CCA697"
+                    android:text="ANIMA HEALTH" />
             </LinearLayout>
+        </FrameLayout>
+        <TextView
+            android:layout_width="300dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textSize="48sp"
+            android:text="수호야 안뇽"
+            android:background="#009688"
+            android:layout_gravity="left" />
+    </androidx.drawerlayout.widget.DrawerLayout>
 
-
-        </ScrollView>
-        <LinearLayout
-            android:id="@+id/appbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:layout_marginTop="0dp"
-            android:orientation="horizontal"
-            android:visibility="visible"
-            android:background="#00E7D0C8">
-            <ImageButton
-                android:id="@+id/btn_menu"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingLeft="10dp"
-                android:background="#00E7D0C8"
-                android:tint="#FFFFFF"
-                android:layout_gravity="center"
-                android:src="@drawable/menubar_icon"/>
-            <TextView
-                android:id="@+id/tv_menu"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:visibility="invisible"
-                android:layout_marginLeft="10dp"
-                android:background="#E7D0C8"
-                android:layout_gravity="center"
-                android:fontFamily="@font/tttogether"
-                android:textSize="25dp"
-                android:textColor="#CCA697"
-                android:text="ANIMA HEALTH" />
-        </LinearLayout>
-    </FrameLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

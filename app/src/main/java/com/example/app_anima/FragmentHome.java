@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +18,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
 
@@ -38,6 +40,7 @@ public class FragmentHome extends Fragment {
     private Timer timer;
     final long DELAY_MS = 500;//delay in milliseconds before task is to be executed
     final long PERIOD_MS = 3000; // time in milliseconds between successive task executions.
+    private DrawerLayout drawer;
 
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         ViewGroup viewGroup = (ViewGroup) inflater.inflate(R.layout.fragment_home, container, false);
@@ -49,6 +52,20 @@ public class FragmentHome extends Fragment {
         tv_menu = (TextView) viewGroup.findViewById(R.id.tv_menu);
         viewPager = (ViewPager) viewGroup.findViewById(R.id.viewPager);
         vp_layout = (LinearLayout) viewGroup.findViewById(R.id.vp_layout);
+
+        //drawer
+        drawer = (DrawerLayout) viewGroup.findViewById(R.id.drawer) ;
+        btn_menu.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!drawer.isDrawerOpen(Gravity.LEFT)) {
+                    drawer.openDrawer(Gravity.LEFT) ;
+                }
+                if (drawer.isDrawerOpen(Gravity.LEFT)) {
+                    drawer.closeDrawer(Gravity.LEFT) ;
+                }
+            }
+        });
 
         mList = new ArrayList<Drawable>();
         mList.add(ResourcesCompat.getDrawable(getResources(),R.drawable.img_ad1,null));
