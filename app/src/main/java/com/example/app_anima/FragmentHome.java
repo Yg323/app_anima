@@ -28,13 +28,13 @@ public class FragmentHome extends Fragment {
     private Button btn_test;
     private ImageButton btn_menu;
     private ScrollView scrollView;
-    private LinearLayout linearLayout;
+    private LinearLayout appbar, vp_layout;
     private TextView tv_menu;
 
     private ArrayList<Drawable> mList;
     private ViewPager viewPager;
     private ADScrollAdapter adScrollAdapter;
-    private int currentPage=0;
+    private boolean load = false;
     private Timer timer;
     final long DELAY_MS = 500;//delay in milliseconds before task is to be executed
     final long PERIOD_MS = 3000; // time in milliseconds between successive task executions.
@@ -45,10 +45,11 @@ public class FragmentHome extends Fragment {
         btn_test = (Button) viewGroup.findViewById(R.id.button2);
         btn_menu = (ImageButton) viewGroup.findViewById(R.id.btn_menu);
         scrollView = (ScrollView) viewGroup.findViewById(R.id.sv_main);
-        linearLayout = (LinearLayout) viewGroup.findViewById(R.id.appbar);
+        appbar = (LinearLayout) viewGroup.findViewById(R.id.appbar);
         tv_menu = (TextView) viewGroup.findViewById(R.id.tv_menu);
-
         viewPager = (ViewPager) viewGroup.findViewById(R.id.viewPager);
+        vp_layout = (LinearLayout) viewGroup.findViewById(R.id.vp_layout);
+
         mList = new ArrayList<Drawable>();
         mList.add(ResourcesCompat.getDrawable(getResources(),R.drawable.img_ad1,null));
         mList.add(ResourcesCompat.getDrawable(getResources(),R.drawable.img_ad2,null));
@@ -56,23 +57,32 @@ public class FragmentHome extends Fragment {
         mList.add(ResourcesCompat.getDrawable(getResources(),R.drawable.img_ad4,null));
         adScrollAdapter = new ADScrollAdapter(getContext(),mList);
         viewPager.setAdapter(adScrollAdapter);
+
         final Handler handler = new Handler();
         final Runnable Update = new Runnable() {
             @Override
             public void run() {
-                if(currentPage == adScrollAdapter.getCount()) {
-                    currentPage = 0;
+                if(load) {
+                    if (viewPager.getCurrentItem() == adScrollAdapter.getCount() - 1) {
+                        viewPager.setCurrentItem(0, true);
+                    } else {
+                        viewPager.setCurrentItem(viewPager.getCurrentItem() + 1, true);
+                    }
                 }
-                viewPager.setCurrentItem(currentPage++, true);
+                else{
+                    load = true;
+                    viewPager.setCurrentItem(0, true);
+                }
             }
-        };
 
+        };
         timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
                 handler.post(Update);
             }
+
         }, DELAY_MS, PERIOD_MS);
 
 
@@ -80,14 +90,13 @@ public class FragmentHome extends Fragment {
             @Override
             public void onScrollChanged() {
                 int scrollY = scrollView.getScrollY(); // For ScrollView
-                int scrollX = scrollView.getScrollX(); // For HorizontalScrollView
-                if(scrollY>=btn_test.getBottom()){
-                    linearLayout.setBackgroundColor(Color.parseColor("#E7D0C8"));
+                if(scrollY>=vp_layout.getBottom()){
+                    appbar.setBackgroundColor(Color.parseColor("#E7D0C8"));
                     tv_menu.setVisibility(View.VISIBLE);
                     btn_menu.setColorFilter(Color.parseColor("#000000"));
                 }
                 else {
-                    linearLayout.setBackgroundColor(Color.parseColor("#00E7D0C8"));
+                    appbar.setBackgroundColor(Color.parseColor("#00E7D0C8"));
                     tv_menu.setVisibility(View.INVISIBLE);
                     btn_menu.setColorFilter(Color.parseColor("#FFFFFF"));
                 }
@@ -96,5 +105,9 @@ public class FragmentHome extends Fragment {
         return viewGroup;
     }
 
-
+    @Override
+    public void onPause() {
+        super.onPause();
+        timer.cancel();
+    }
 }
