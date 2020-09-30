@@ -27,12 +27,14 @@ public class ADScrollAdapter extends PagerAdapter {
 
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
-
+        View v = null;
         //뷰페이지 슬라이딩 할 레이아웃 인플레이션
-        LayoutInflater inflater = (LayoutInflater) context.getSystemService(LAYOUT_INFLATER_SERVICE);
-        View v = inflater.inflate(R.layout.ad_viewpager,null);
-        ImageView image_container = (ImageView) v.findViewById(R.id.image_container);
-        Glide.with(context).load(data.get(position)).into(image_container);
+        if(context != null) {
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(LAYOUT_INFLATER_SERVICE);
+            v = inflater.inflate(R.layout.ad_viewpager, null);
+            ImageView image_container = (ImageView) v.findViewById(R.id.image_container);
+            Glide.with(context).load(data.get(position)).into(image_container);
+        }
         container.addView(v);
         return v;
     }

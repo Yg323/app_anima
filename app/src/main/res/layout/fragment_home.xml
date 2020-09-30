@@ -24,13 +24,15 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
-
-                <cn.trinea.android.view.autoscrollviewpager.AutoScrollViewPager
-                    android:id="@+id/autoViewPager"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="200dp">
+                    android:layout_height="wrap_content">
+                    <androidx.viewpager.widget.ViewPager
+                        android:id="@+id/viewPager"
+                        android:layout_width="wrap_content"
+                        android:layout_height="200dp" />
+                </LinearLayout>
 
-                </cn.trinea.android.view.autoscrollviewpager.AutoScrollViewPager>
                 <Button
                     android:id="@+id/button2"
                     android:layout_width="match_parent"
