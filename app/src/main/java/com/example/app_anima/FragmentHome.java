@@ -24,15 +24,16 @@ import androidx.viewpager.widget.ViewPager;
 import com.dinuscxj.progressbar.CircleProgressBar;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class FragmentHome extends Fragment {
 
-    private ImageButton btn_menu;
+    private ImageButton btn_menu,circle_add,circle_minus;
     private ScrollView scrollView;
     private LinearLayout appbar, vp_layout;
-    private TextView tv_menu;
+    private TextView tv_menu,tv_water;
 
     private ArrayList<Drawable> mList;
     private ViewPager viewPager;
@@ -44,15 +45,19 @@ public class FragmentHome extends Fragment {
     private DrawerLayout drawer;
     private static final String DEFAULT_PATTERN = "%d%%";
     private CircleProgressBar circleProgressBar;
+    private int water_count, nweek;
 
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         ViewGroup viewGroup = (ViewGroup) inflater.inflate(R.layout.fragment_home, container, false);
 
 
         btn_menu = (ImageButton) viewGroup.findViewById(R.id.btn_menu);
+        circle_add = (ImageButton) viewGroup.findViewById(R.id.circle_add);
+        circle_minus = (ImageButton) viewGroup.findViewById(R.id.circle_minus);
         scrollView = (ScrollView) viewGroup.findViewById(R.id.sv_main);
         appbar = (LinearLayout) viewGroup.findViewById(R.id.appbar);
         tv_menu = (TextView) viewGroup.findViewById(R.id.tv_menu);
+        tv_water = (TextView) viewGroup.findViewById(R.id.tv_water);
         viewPager = (ViewPager) viewGroup.findViewById(R.id.viewPager);
         vp_layout = (LinearLayout) viewGroup.findViewById(R.id.vp_layout);
         circleProgressBar = (CircleProgressBar) viewGroup.findViewById(R.id.cpb_circlebar);
@@ -125,6 +130,37 @@ public class FragmentHome extends Fragment {
                 }
             }
         });
+        Calendar cal = Calendar.getInstance();
+        nweek = cal.get(Calendar.DAY_OF_WEEK); //요일 구하기
+        if(PreferenceManager.getInt(getContext(),"nweek")!=nweek) {
+            PreferenceManager.setInt(getContext(), "water_count", 0);
+            PreferenceManager.setInt(getContext(),"nweek",nweek);
+        }
+        water_count = PreferenceManager.getInt(getContext(),"water_count");
+        tv_water.setText(Integer.toString(water_count));
+        circle_add.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                water_count+=100;
+                tv_water.setText (Integer.toString(water_count));
+                PreferenceManager.setInt(getContext(), "water_count", water_count);
+            }
+        });
+        circle_minus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(water_count!=0) {
+                    water_count-=100;
+                    tv_water.setText(Integer.toString(water_count));
+                    PreferenceManager.setInt(getContext(), "water_count", water_count);
+                }
+                else{
+                    tv_water.setText("0");
+                    PreferenceManager.setInt(getContext(), "water_count", 0);
+                }
+            }
+        });
+
         return viewGroup;
     }
 
