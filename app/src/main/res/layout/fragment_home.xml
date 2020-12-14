@@ -56,13 +56,12 @@
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent"
-                            app:progress_background_color="#DFB89A"
-                            app:progress_end_color="#FFE400"
-                            app:progress_start_color="#FAF4C0"
+                            app:progress_background_color="#EEEEEE"
+                            app:progress_start_color="#F56E47"
                             app:progress_stroke_cap="round"
-                            app:progress_stroke_width="15dp "
+                            app:progress_stroke_width="10dp "
                             app:progress_text_color="#000000"
-                            app:progress_text_size="50sp"
+                            app:progress_text_size="30dp"
                             app:style="solid_line" />
 
                         <TextView

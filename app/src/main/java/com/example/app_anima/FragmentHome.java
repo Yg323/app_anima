@@ -61,8 +61,9 @@ public class FragmentHome extends Fragment {
         viewPager = (ViewPager) viewGroup.findViewById(R.id.viewPager);
         vp_layout = (LinearLayout) viewGroup.findViewById(R.id.vp_layout);
         circleProgressBar = (CircleProgressBar) viewGroup.findViewById(R.id.cpb_circlebar);
-        circleProgressBar.setProgress(70);
 
+        //산책
+        circleProgressBar.setProgress(0);
 
         //drawer
         drawer = (DrawerLayout) viewGroup.findViewById(R.id.drawer) ;
@@ -78,6 +79,7 @@ public class FragmentHome extends Fragment {
             }
         });
 
+        //광고창
         mList = new ArrayList<Drawable>();
         mList.add(ResourcesCompat.getDrawable(getResources(),R.drawable.img_ad1,null));
         mList.add(ResourcesCompat.getDrawable(getResources(),R.drawable.img_ad2,null));
@@ -130,7 +132,9 @@ public class FragmentHome extends Fragment {
                 }
             }
         });
-        Calendar cal = Calendar.getInstance();
+
+        //물물
+       Calendar cal = Calendar.getInstance();
         nweek = cal.get(Calendar.DAY_OF_WEEK); //요일 구하기
         if(PreferenceManager.getInt(getContext(),"nweek")!=nweek) {
             PreferenceManager.setInt(getContext(), "water_count", 0);
@@ -173,4 +177,5 @@ public class FragmentHome extends Fragment {
     public CharSequence format(int progress, int max) {
         return String.format(DEFAULT_PATTERN, (int) ((float) progress / (float) max * 100));
     }
+
 }
