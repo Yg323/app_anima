@@ -1,5 +1,6 @@
 package com.example.app_anima;
 
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -21,7 +22,7 @@ public class FragmentMagazin extends Fragment {
     ArrayList<RecyTrainItem> mList = new ArrayList<RecyTrainItem>();
 
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        ViewGroup viewGroup = (ViewGroup) inflater.inflate(R.layout.fragment_magazin, container, false);
+        final ViewGroup viewGroup = (ViewGroup) inflater.inflate(R.layout.fragment_magazin, container, false);
         recy_train = (RecyclerView)viewGroup.findViewById(R.id.recy_train);
         recyTrainAdapter = new RecyTrainAdapter(mList);
 
@@ -32,6 +33,15 @@ public class FragmentMagazin extends Fragment {
         addItem(ContextCompat.getDrawable(getActivity(),R.drawable.dog_water),"아");
         addItem(ContextCompat.getDrawable(getActivity(),R.drawable.img_ad1),"야");
         addItem(ContextCompat.getDrawable(getActivity(),R.drawable.icon_playdog),"어");
+
+        recyTrainAdapter.setOnItemClickListener(new RecyTrainAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(View v, int pos) {
+                Intent intent = new Intent(getActivity(), TrainExample1.class);
+                startActivity(intent);
+            }
+        });
+
         return viewGroup;
     }
     public void addItem(Drawable icon, String title) {

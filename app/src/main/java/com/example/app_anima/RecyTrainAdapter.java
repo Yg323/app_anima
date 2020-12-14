@@ -16,6 +16,17 @@ public class RecyTrainAdapter extends RecyclerView.Adapter<RecyTrainAdapter.View
     RecyTrainAdapter(ArrayList<RecyTrainItem>list){
         mData = list;
     }
+
+    public interface OnItemClickListener {
+        void onItemClick(View v, int pos);
+    }
+
+    private OnItemClickListener onItemClickListener = null;
+
+    public void setOnItemClickListener (OnItemClickListener listener) {
+        this.onItemClickListener = listener;
+    }
+
     @Override
     public RecyTrainAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType){
         Context context = parent.getContext() ;
@@ -49,6 +60,16 @@ public class RecyTrainAdapter extends RecyclerView.Adapter<RecyTrainAdapter.View
             // 뷰 객체에 대한 참조. (hold strong reference)
             iv_trainIcon = itemView.findViewById(R.id.iv_trainIcon) ;
             tv_trainTitle = itemView.findViewById(R.id.tv_trainTitle) ;
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int pos = getAdapterPosition();
+                    if (pos != RecyclerView.NO_POSITION) {
+                        if (onItemClickListener != null) onItemClickListener.onItemClick(v, pos);
+                    }
+                }
+            });
         }
     }
 }
