@@ -30,14 +30,17 @@ public class FragmentMagazin extends Fragment {
         recy_train.setLayoutManager(new LinearLayoutManager(viewGroup.getContext(),LinearLayoutManager.HORIZONTAL,false));
 
         //리사이클러뷰 아이템 추가
-        addItem(ContextCompat.getDrawable(getActivity(),R.drawable.dog_water),"아");
-        addItem(ContextCompat.getDrawable(getActivity(),R.drawable.img_ad1),"야");
-        addItem(ContextCompat.getDrawable(getActivity(),R.drawable.icon_playdog),"어");
+        addItem(ContextCompat.getDrawable(getActivity(),R.drawable.icon_playdog),"어깨관절");
+        addItem(ContextCompat.getDrawable(getActivity(),R.drawable.icon_playdog),"골반");
+        addItem(ContextCompat.getDrawable(getActivity(),R.drawable.icon_playdog),"스트레칭");
+        addItem(ContextCompat.getDrawable(getActivity(),R.drawable.icon_playdog),"쿠키 스트레칭");
+        addItem(ContextCompat.getDrawable(getActivity(),R.drawable.icon_playdog),"뒷다리 체중 이동");
 
         recyTrainAdapter.setOnItemClickListener(new RecyTrainAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(View v, int pos) {
-                Intent intent = new Intent(getActivity(), TrainExample1.class);
+            public void onItemClick(View v, int pos) { // 일단 서버 안쓰니까 숫자로 넘겨서 받겠음
+                Intent intent = new Intent(getActivity(), TrainingActivity.class);
+                intent.putExtra("index", pos);
                 startActivity(intent);
             }
         });

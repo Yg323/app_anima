@@ -41,11 +41,15 @@
     <TextView
         android:id="@+id/traincontent"
         android:layout_width="400dp"
-        android:layout_height="380dp"
+        android:layout_height="320dp"
         android:layout_marginTop="30dp"
         android:background="@drawable/textview_border_style"
         android:fontFamily="@font/nanum_baren_yet"
         android:textColor="@color/black"
+        android:inputType="textMultiLine"
+        android:scrollbarAlwaysDrawVerticalTrack="true"
+        android:scrollbarFadeDuration="0"
+        android:scrollbarSize="2dp"
         android:textSize="16dp"
         android:padding="5dp"
         android:lineSpacingMultiplier="1.5"
@@ -53,7 +57,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/trainvideo" />
-
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
