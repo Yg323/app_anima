@@ -2,18 +2,157 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#E7D0C8">
-
     <TextView
-        android:id="@+id/textView3"
+        android:id="@+id/tv_trainingcontent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="훈련 기록"
-        android:textSize="50dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginTop="24dp"
+        android:fontFamily="@font/tttogether"
+        android:text="ANIMA HEALTH"
+        android:textSize="20dp"
+        android:textColor="#CCA697"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.127"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+    <ScrollView
+        android:id="@+id/sv_memo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_trainingcontent">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:paddingBottom="100dp"
+            android:orientation="vertical">
+            <LinearLayout
+                android:id="@+id/linearLayout"
+                android:layout_width="match_parent"
+                android:layout_height="500dp"
+                android:layout_margin="20dp"
+                android:layout_marginTop="32dp"
+                android:background="@drawable/box_large"
+                android:orientation="vertical">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:background="@drawable/box_darkpink"
+                    android:layout_height="50dp"
+                    android:layout_margin="20dp">
+                    <Button
+                        android:layout_width="60dp"
+                        android:layout_height="match_parent"
+                        android:padding="3dp"
+                        android:layout_margin="11dp"
+                        android:text="일"
+                        android:textColor="#565656"
+                        android:fontFamily="@font/recipekorea"
+                        android:textSize="20dp"
+                        android:background="@drawable/box_large">
+                    </Button>
+                    <Button
+                        android:layout_width="60dp"
+                        android:layout_height="match_parent"
+                        android:padding="3dp"
+                        android:layout_margin="11dp"
+                        android:text="주"
+                        android:textColor="#565656"
+                        android:fontFamily="@font/recipekorea"
+                        android:textSize="20dp"
+                        android:background="@drawable/box_large">
+                    </Button>
+                    <Button
+                        android:layout_width="60dp"
+                        android:layout_height="match_parent"
+                        android:padding="3dp"
+                        android:layout_margin="11dp"
+                        android:text="월"
+                        android:textColor="#565656"
+                        android:fontFamily="@font/recipekorea"
+                        android:textSize="20dp"
+                        android:background="@drawable/box_large">
+                    </Button>
+                    <Button
+                        android:layout_width="60dp"
+                        android:layout_height="match_parent"
+                        android:padding="3dp"
+                        android:layout_margin="11dp"
+                        android:text="년"
+                        android:textColor="#565656"
+                        android:fontFamily="@font/recipekorea"
+                        android:textSize="20dp"
+                        android:background="@drawable/box_large">
+                    </Button>
+                </LinearLayout>
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="70dp">
+
+                    <TextView
+                        android:id="@+id/text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="25dp"
+                        android:layout_marginLeft="25dp"
+                        android:layout_marginTop="5dp"
+                        android:text="총"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="52dp"
+                        android:layout_marginEnd="24dp"
+                        android:layout_marginRight="24dp"
+                        android:text="오늘"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/linearLayout2"
+                android:layout_width="match_parent"
+                android:layout_height="400dp"
+                android:layout_margin="20dp"
+                android:background="@drawable/box_regular"
+                android:orientation="vertical">
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="400dp"
+                android:layout_margin="20dp"
+                android:background="@drawable/box_large"
+                android:orientation="vertical">
+
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="400dp"
+                android:layout_margin="20dp"
+                android:background="@drawable/box_large"
+                android:orientation="vertical">
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

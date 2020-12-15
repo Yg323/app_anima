@@ -10,7 +10,11 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 public class FragmentMemo extends Fragment {
+    ViewGroup viewGroup ;
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_memo, container, false);
+        viewGroup =  (ViewGroup) inflater.inflate(R.layout.fragment_home, container, false);
+
+
+        return viewGroup;
     }
 }
