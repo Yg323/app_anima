@@ -70,7 +70,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="30dp"
                             android:layout_marginBottom="50dp"
-                            android:fontFamily="@font/nanum_baren_yet"
+                            android:fontFamily="@font/recipekorea"
                             android:text="산책을 시작해보세요!"
                             android:textSize="20sp"
                             app:layout_constraintBottom_toBottomOf="parent"
@@ -745,7 +745,7 @@
                             app:layout_constraintVertical_bias="0.76">
 
                             <TextView
-                                android:id="@+id/tv_blood"
+                                android:id="@+id/tv_temp"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/tttogether"
@@ -768,7 +768,7 @@
                                 app:layout_constraintBottom_toBottomOf="parent"
                                 app:layout_constraintEnd_toEndOf="parent"
                                 app:layout_constraintHorizontal_bias="0.05"
-                                app:layout_constraintStart_toEndOf="@id/tv_blood"
+                                app:layout_constraintStart_toEndOf="@id/tv_temp"
                                 app:layout_constraintTop_toTopOf="parent"
                                 app:layout_constraintVertical_bias="0.75" />
 
@@ -839,7 +839,9 @@
             android:layout_width="300dp"
             android:layout_height="match_parent"
             android:layout_gravity="left"
-            android:background="#E7D0C8" />
+            android:background="#E7D0C8" >
+
+        </ListView>
     </androidx.drawerlayout.widget.DrawerLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

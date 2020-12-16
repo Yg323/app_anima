@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -22,7 +23,7 @@ public class TestArduino extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.test);
         bt = new BluetoothSPP(this); //Initializing
-
+        System.out.println("연결");
         if (!bt.isBluetoothAvailable()) { //블루투스 사용 불가
             Toast.makeText(getApplicationContext()
                     , "Bluetooth is not available"
@@ -33,6 +34,10 @@ public class TestArduino extends AppCompatActivity {
         bt.setOnDataReceivedListener(new BluetoothSPP.OnDataReceivedListener() { //데이터 수신
             public void onDataReceived(byte[] data, String message) {
                 Toast.makeText(TestArduino.this, message, Toast.LENGTH_SHORT).show();
+                System.out.println(message);
+                String[] array = message.split("=");
+                Log.d("종류",array[0]);
+                Log.d("값",array[1]);
             }
         });
 
@@ -80,19 +85,11 @@ public class TestArduino extends AppCompatActivity {
                 if (!bt.isServiceAvailable()) {
                     bt.setupService();
                     bt.startService(BluetoothState.DEVICE_OTHER); //DEVICE_ANDROID는 안드로이드 기기 끼리
-                    setup();
                 }
             }
         }
 
-        public void setup() {
-            Button btnSend = findViewById(R.id.btnSend); //데이터 전송
-            btnSend.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    bt.send("Text", true);
-                }
-            });
-        }
+
 
         public void onActivityResult(int requestCode, int resultCode, Intent data) {
             super.onActivityResult(requestCode, resultCode, data);
@@ -103,7 +100,6 @@ public class TestArduino extends AppCompatActivity {
                 if (resultCode == Activity.RESULT_OK) {
                     bt.setupService();
                     bt.startService(BluetoothState.DEVICE_OTHER);
-                    setup();
                 } else {
                     Toast.makeText(getApplicationContext()
                             , "Bluetooth was not enabled."
