@@ -167,13 +167,19 @@ public class FragmentHome extends Fragment {
                     case "V" : //7미만의 숫자가 나올 경우 걸음수 +1
                         Log.d("V 값 들어왔음",array[1]);
                         String[] V = array[1].split(",");
+                        int minus =0; int stepCnt=0;
                         for (int i = 0; i < V.length ; i++) {
                             if(Float.parseFloat(V[i])<7){
-                                PreferenceManager.setInt(getContext(),"dog_step",++step);
-                                go_jog.setText(Integer.toString(step)+"/1000걸음"); //걸음수 초기값 1000으로 설정해두었는데 바꾸어야함
-                                //산책
-                                circleProgressBar.setProgress(step/10);
+                                if(Float.parseFloat(V[i])<0) minus++;
+                                stepCnt++;
                             }
+                        }
+                        if(minus<8){
+                            step+=stepCnt;
+                            PreferenceManager.setInt(getContext(),"dog_step",step);
+                            go_jog.setText(Integer.toString(step)+"/1000걸음"); //걸음수 초기값 1000으로 설정해두었는데 바꾸어야함
+                            //산책
+                            circleProgressBar.setProgress(step/10);
                         }
                         break;
                     case "P" :
@@ -186,9 +192,9 @@ public class FragmentHome extends Fragment {
                         cnt++;
                         Log.d("cnt값이당", String.valueOf(cnt));
 
-                        if(cnt==10){
-                            PreferenceManager.setFloat(getContext(),"Temperature", (float) (Math.round((tempSum) * 10) / 100.0));
-                            Log.d("tempSum", String.valueOf(Math.round((tempSum) * 10) / 100.0));
+                        if(cnt==5){
+                            PreferenceManager.setFloat(getContext(),"Temperature", (float) (Math.round((tempSum) * 20) / 100.0));
+                            Log.d("tempSum", String.valueOf(Math.round((tempSum) * 20) / 100.0));
                             tv_temp.setText(String.valueOf(PreferenceManager.getFloat(getContext(),"Temperature")));
                             tempSum=0;cnt=0;
                         }
