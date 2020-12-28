@@ -11,6 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
+        android:layout_marginBottom="10dp"
         android:fontFamily="@font/tttogether"
         android:text="ANIMA HEALTH"
         android:textSize="20dp"
@@ -22,7 +23,7 @@
         app:layout_constraintTop_toTopOf="parent" />
     <ScrollView
         android:id="@+id/sv_memo"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -31,7 +32,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="0dp"
             android:paddingBottom="100dp"
             android:orientation="vertical">
             <LinearLayout
@@ -42,86 +43,118 @@
                 android:layout_marginTop="32dp"
                 android:background="@drawable/box_large"
                 android:orientation="vertical">
-                <LinearLayout
+                <TableLayout
                     android:layout_width="match_parent"
                     android:background="@drawable/box_darkpink"
                     android:layout_height="50dp"
                     android:layout_margin="20dp">
-                    <Button
-                        android:layout_width="60dp"
-                        android:layout_height="match_parent"
-                        android:padding="3dp"
-                        android:layout_margin="11dp"
-                        android:text="일"
-                        android:textColor="#565656"
-                        android:fontFamily="@font/recipekorea"
-                        android:textSize="20dp"
-                        android:background="@drawable/box_large">
-                    </Button>
-                    <Button
-                        android:layout_width="60dp"
-                        android:layout_height="match_parent"
-                        android:padding="3dp"
-                        android:layout_margin="11dp"
-                        android:text="주"
-                        android:textColor="#565656"
-                        android:fontFamily="@font/recipekorea"
-                        android:textSize="20dp"
-                        android:background="@drawable/box_large">
-                    </Button>
-                    <Button
-                        android:layout_width="60dp"
-                        android:layout_height="match_parent"
-                        android:padding="3dp"
-                        android:layout_margin="11dp"
-                        android:text="월"
-                        android:textColor="#565656"
-                        android:fontFamily="@font/recipekorea"
-                        android:textSize="20dp"
-                        android:background="@drawable/box_large">
-                    </Button>
-                    <Button
-                        android:layout_width="60dp"
-                        android:layout_height="match_parent"
-                        android:padding="3dp"
-                        android:layout_margin="11dp"
-                        android:text="년"
-                        android:textColor="#565656"
-                        android:fontFamily="@font/recipekorea"
-                        android:textSize="20dp"
-                        android:background="@drawable/box_large">
-                    </Button>
-                </LinearLayout>
+                    <TableRow>
+                        <Button
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="match_parent"
+                            android:padding="3dp"
+                            android:layout_margin="11dp"
+                            android:text="일"
+                            android:textColor="#565656"
+                            android:fontFamily="@font/recipekorea"
+                            android:textSize="20dp"
+                            android:background="@drawable/box_large">
+                        </Button>
+                        <Button
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="match_parent"
+                            android:padding="3dp"
+                            android:layout_margin="11dp"
+                            android:text="주"
+                            android:textColor="#565656"
+                            android:fontFamily="@font/recipekorea"
+                            android:textSize="20dp"
+                            android:background="@drawable/box_large">
+                        </Button>
+                        <Button
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="match_parent"
+                            android:padding="3dp"
+                            android:layout_margin="11dp"
+                            android:text="월"
+                            android:textColor="#565656"
+                            android:fontFamily="@font/recipekorea"
+                            android:textSize="20dp"
+                            android:background="@drawable/box_large">
+                        </Button>
+                        <Button
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="match_parent"
+                            android:padding="3dp"
+                            android:layout_margin="11dp"
+                            android:text="년"
+                            android:textColor="#565656"
+                            android:fontFamily="@font/recipekorea"
+                            android:textSize="20dp"
+                            android:background="@drawable/box_large">
+                        </Button>
+                    </TableRow>
+                </TableLayout>
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="70dp">
+                    android:layout_height="wrap_content">
 
                     <TextView
                         android:id="@+id/text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="25dp"
-                        android:layout_marginLeft="25dp"
-                        android:layout_marginTop="5dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginLeft="16dp"
+                        android:layout_marginTop="4dp"
                         android:text="총"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginLeft="16dp"
+                        android:layout_marginTop="5dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/text">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/recipekorea"
+                            android:text="00,000"
+                            android:textColor="@color/black"
+                            android:textSize="20dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="3dp"
+                            android:fontFamily="@font/recipekorea"
+                            android:text="걸음" />
+                    </LinearLayout>
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="52dp"
-                        android:layout_marginEnd="24dp"
-                        android:layout_marginRight="24dp"
+                        android:layout_marginEnd="28dp"
+                        android:layout_marginRight="28dp"
                         android:text="오늘"
+                        app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                         />
                 </androidx.constraintlayout.widget.ConstraintLayout>
-                <androidx.constraintlayout.widget.ConstraintLayout
+                <com.github.mikephil.charting.charts.BarChart
+                    android:id="@+id/barChart"
+                    android:layout_margin="20dp"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                    android:layout_height="match_parent" />
 
             </LinearLayout>
 

@@ -130,7 +130,7 @@ public class FragmentHome extends Fragment {
             }
         });
 
-        bt = new BluetoothSPP(getContext()); //Initializing
+        /*bt = new BluetoothSPP(getContext()); //Initializing
 
         if (!bt.isBluetoothAvailable()) { //블루투스 사용 불가
             Toast.makeText(getContext()
@@ -256,7 +256,7 @@ public class FragmentHome extends Fragment {
                     drawer.closeDrawer(Gravity.LEFT) ;
                 }
             }
-        });
+        });*/
 
         //광고창
         mList = new ArrayList<Drawable>();
@@ -437,7 +437,7 @@ public class FragmentHome extends Fragment {
         return viewGroup;
     }
 
-    @Override
+    /*@Override
     public void onPause() {
         super.onPause();
         timer.cancel();
@@ -484,5 +484,5 @@ public class FragmentHome extends Fragment {
             }
         }
     }
-
+*/
 }

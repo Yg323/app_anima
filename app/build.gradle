@@ -21,7 +21,10 @@ android {
         }
     }
 }
-
+//mpandroid 그래프
+repositories {
+    maven { url 'https://jitpack.io' }
+}
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation 'androidx.appcompat:appcompat:1.1.0'
@@ -38,4 +41,9 @@ dependencies {
 
     //블루투스 통신
     compile 'com.akexorcist:bluetoothspp:1.0.0'
+    //mpandroid 그래프
+    dependencies {
+        implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    }
+
 }
