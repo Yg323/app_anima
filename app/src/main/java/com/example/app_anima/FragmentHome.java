@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
@@ -39,11 +40,9 @@ import androidx.viewpager.widget.ViewPager;
 import com.dinuscxj.progressbar.CircleProgressBar;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.stream.Stream;
 
 import app.akexorcist.bluetotohspp.library.BluetoothSPP;
 import app.akexorcist.bluetotohspp.library.BluetoothState;
@@ -107,7 +106,7 @@ public class FragmentHome extends Fragment {
             go_jog.setText(Integer.toString(step)+"/1000걸음");//걸음수 초기값 10000으로 설정해두었는데 바꾸어야함
             circleProgressBar.setProgress(step/10);
         }
-        circle_add.setOnClickListener(new View.OnClickListener() {
+        circle_add.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 water_count+=100;
@@ -115,7 +114,7 @@ public class FragmentHome extends Fragment {
                 PreferenceManager.setInt(getContext(), "water_count", water_count);
             }
         });
-        circle_minus.setOnClickListener(new View.OnClickListener() {
+        circle_minus.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(water_count!=0) {
@@ -130,7 +129,7 @@ public class FragmentHome extends Fragment {
             }
         });
 
-        /*bt = new BluetoothSPP(getContext()); //Initializing
+        bt = new BluetoothSPP(getContext()); //Initializing
 
         if (!bt.isBluetoothAvailable()) { //블루투스 사용 불가
             Toast.makeText(getContext()
@@ -168,9 +167,9 @@ public class FragmentHome extends Fragment {
                         Log.d("V 값 들어왔음",array[1]);
                         String[] V = array[1].split(",");
                         int minus =0; int stepCnt=0;
-                        for (int i = 0; i < V.length ; i++) {
-                            if(Float.parseFloat(V[i])<7){
-                                if(Float.parseFloat(V[i])<0) minus++;
+                        for (String s : V) {
+                            if (Float.parseFloat(s) < 7) {
+                                if (Float.parseFloat(s) < 0) minus++;
                                 stepCnt++;
                             }
                         }
@@ -246,7 +245,7 @@ public class FragmentHome extends Fragment {
 
         //drawer
         drawer = (DrawerLayout) viewGroup.findViewById(R.id.drawer) ;
-        btn_menu.setOnClickListener(new View.OnClickListener() {
+        btn_menu.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!drawer.isDrawerOpen(Gravity.LEFT)) {
@@ -256,10 +255,10 @@ public class FragmentHome extends Fragment {
                     drawer.closeDrawer(Gravity.LEFT) ;
                 }
             }
-        });*/
+        });
 
         //광고창
-        mList = new ArrayList<Drawable>();
+        mList = new ArrayList<>();
         mList.add(ResourcesCompat.getDrawable(getResources(),R.drawable.img_ad1,null));
         mList.add(ResourcesCompat.getDrawable(getResources(),R.drawable.img_ad2,null));
         mList.add(ResourcesCompat.getDrawable(getResources(),R.drawable.img_ad3,null));
@@ -313,7 +312,7 @@ public class FragmentHome extends Fragment {
         });
 
         //사료
-        btn_feedinput.setOnClickListener(new View.OnClickListener() {
+        btn_feedinput.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 final double curCal;
@@ -361,7 +360,7 @@ public class FragmentHome extends Fragment {
                 final AlertDialog alertDialog = builder.create();
                 alertDialog.show();
 
-                btnPlus100.setOnClickListener(new View.OnClickListener() {
+                btnPlus100.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         Double curInputFeed = Double.parseDouble(editTextInputFeed.getText().toString());
@@ -369,7 +368,7 @@ public class FragmentHome extends Fragment {
                         editTextInputFeed.setText(String.valueOf(curInputFeed));
                     }
                 });
-                btnPlus10.setOnClickListener(new View.OnClickListener() {
+                btnPlus10.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         Double curInputFeed = Double.parseDouble(editTextInputFeed.getText().toString());
@@ -377,7 +376,7 @@ public class FragmentHome extends Fragment {
                         editTextInputFeed.setText(String.valueOf(curInputFeed));
                     }
                 });
-                btnPlus1.setOnClickListener(new View.OnClickListener() {
+                btnPlus1.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         Double curInputFeed = Double.parseDouble(editTextInputFeed.getText().toString());
@@ -385,7 +384,7 @@ public class FragmentHome extends Fragment {
                         editTextInputFeed.setText(String.valueOf(curInputFeed));
                     }
                 });
-                btnMinus100.setOnClickListener(new View.OnClickListener() {
+                btnMinus100.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         Double curInputFeed = Double.parseDouble(editTextInputFeed.getText().toString());
@@ -393,7 +392,7 @@ public class FragmentHome extends Fragment {
                         editTextInputFeed.setText(String.valueOf(curInputFeed));
                     }
                 });
-                btnMinus10.setOnClickListener(new View.OnClickListener() {
+                btnMinus10.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         Double curInputFeed = Double.parseDouble(editTextInputFeed.getText().toString());
@@ -401,7 +400,7 @@ public class FragmentHome extends Fragment {
                         editTextInputFeed.setText(String.valueOf(curInputFeed));
                     }
                 });
-                btnMinus1.setOnClickListener(new View.OnClickListener() {
+                btnMinus1.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         Double curInputFeed = Double.parseDouble(editTextInputFeed.getText().toString());
@@ -410,14 +409,14 @@ public class FragmentHome extends Fragment {
                     }
                 });
 
-                btnCancel.setOnClickListener(new View.OnClickListener() {
+                btnCancel.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         alertDialog.dismiss();
                     }
                 });
 
-                btnApply.setOnClickListener(new View.OnClickListener() {
+                btnApply.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         int checkedRadio = mRadioGroup.getCheckedRadioButtonId();
@@ -437,7 +436,7 @@ public class FragmentHome extends Fragment {
         return viewGroup;
     }
 
-    /*@Override
+    @Override
     public void onPause() {
         super.onPause();
         timer.cancel();
@@ -484,5 +483,4 @@ public class FragmentHome extends Fragment {
             }
         }
     }
-*/
 }

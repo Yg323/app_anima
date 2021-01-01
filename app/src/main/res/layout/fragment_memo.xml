@@ -21,20 +21,24 @@
         app:layout_constraintHorizontal_bias="0.127"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
     <ScrollView
         android:id="@+id/sv_memo"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="36dp"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_trainingcontent">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="0dp"
-            android:paddingBottom="100dp"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingBottom="100dp">
+
             <LinearLayout
                 android:id="@+id/linearLayout"
                 android:layout_width="match_parent"
@@ -43,62 +47,65 @@
                 android:layout_marginTop="32dp"
                 android:background="@drawable/box_large"
                 android:orientation="vertical">
+
                 <TableLayout
                     android:layout_width="match_parent"
-                    android:background="@drawable/box_darkpink"
                     android:layout_height="50dp"
-                    android:layout_margin="20dp">
+                    android:layout_margin="20dp"
+                    android:background="@drawable/box_darkpink">
+
                     <TableRow>
+
                         <Button
                             android:layout_width="0dp"
-                            android:layout_weight="1"
                             android:layout_height="match_parent"
-                            android:padding="3dp"
                             android:layout_margin="11dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/box_large"
+                            android:fontFamily="@font/recipekorea"
+                            android:padding="3dp"
                             android:text="일"
                             android:textColor="#565656"
-                            android:fontFamily="@font/recipekorea"
-                            android:textSize="20dp"
-                            android:background="@drawable/box_large">
-                        </Button>
+                            android:textSize="20dp"></Button>
+
                         <Button
                             android:layout_width="0dp"
-                            android:layout_weight="1"
                             android:layout_height="match_parent"
-                            android:padding="3dp"
                             android:layout_margin="11dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/box_large"
+                            android:fontFamily="@font/recipekorea"
+                            android:padding="3dp"
                             android:text="주"
                             android:textColor="#565656"
-                            android:fontFamily="@font/recipekorea"
-                            android:textSize="20dp"
-                            android:background="@drawable/box_large">
-                        </Button>
+                            android:textSize="20dp"></Button>
+
                         <Button
                             android:layout_width="0dp"
-                            android:layout_weight="1"
                             android:layout_height="match_parent"
-                            android:padding="3dp"
                             android:layout_margin="11dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/box_large"
+                            android:fontFamily="@font/recipekorea"
+                            android:padding="3dp"
                             android:text="월"
                             android:textColor="#565656"
-                            android:fontFamily="@font/recipekorea"
-                            android:textSize="20dp"
-                            android:background="@drawable/box_large">
-                        </Button>
+                            android:textSize="20dp"></Button>
+
                         <Button
                             android:layout_width="0dp"
-                            android:layout_weight="1"
                             android:layout_height="match_parent"
-                            android:padding="3dp"
                             android:layout_margin="11dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/box_large"
+                            android:fontFamily="@font/recipekorea"
+                            android:padding="3dp"
                             android:text="년"
                             android:textColor="#565656"
-                            android:fontFamily="@font/recipekorea"
-                            android:textSize="20dp"
-                            android:background="@drawable/box_large">
-                        </Button>
+                            android:textSize="20dp"></Button>
                     </TableRow>
                 </TableLayout>
+
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
@@ -147,14 +154,14 @@
                         android:layout_marginRight="28dp"
                         android:text="오늘"
                         app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                         />
+                        app:layout_constraintEnd_toEndOf="parent" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
+
                 <com.github.mikephil.charting.charts.BarChart
                     android:id="@+id/barChart"
-                    android:layout_margin="20dp"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
+                    android:layout_height="match_parent"
+                    android:layout_margin="20dp" />
 
             </LinearLayout>
 
@@ -166,6 +173,44 @@
                 android:background="@drawable/box_large"
                 android:orientation="vertical">
 
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="0dp">
+
+                    <ImageView
+                        android:id="@+id/imageView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/icon_temperature"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.0"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintVertical_bias="0.0" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/nanum_baren_yet"
+                        android:text="체온"
+                        android:textSize="15dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.048"
+                        app:layout_constraintStart_toEndOf="@+id/imageView"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintVertical_bias="0.529" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <com.github.mikephil.charting.charts.LineChart
+                    android:id="@+id/lineChart"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="20dp" />
             </LinearLayout>
 
             <LinearLayout
@@ -175,7 +220,40 @@
                 android:background="@drawable/box_large"
                 android:orientation="vertical">
 
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="0dp">
+
+                    <ImageView
+                        android:id="@+id/imageView1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/icon_fork"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.0"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintVertical_bias="0.0" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/nanum_baren_yet"
+                        android:text="사료"
+                        android:textSize="15dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.048"
+                        app:layout_constraintStart_toEndOf="@+id/imageView1"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintVertical_bias="0.529" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
             </LinearLayout>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="400dp"
@@ -183,6 +261,44 @@
                 android:background="@drawable/box_large"
                 android:orientation="vertical">
 
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="0dp">
+
+                    <ImageView
+                        android:id="@+id/imageView2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/dog_water"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.0"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintVertical_bias="0.0" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/nanum_baren_yet"
+                        android:text="물"
+                        android:textSize="15dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.048"
+                        app:layout_constraintStart_toEndOf="@+id/imageView2"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintVertical_bias="0.529" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <com.github.mikephil.charting.charts.BarChart
+                    android:id="@+id/barChartWater"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="20dp" />
             </LinearLayout>
 
         </LinearLayout>
