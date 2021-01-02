@@ -23,6 +23,8 @@
         android:layout_height="wrap_content"
         app:itemIconTint="@drawable/color_menu"
         app:itemTextColor="@drawable/color_menu"
+        app:labelVisibilityMode="unlabeled"
+        app:itemIconSize="40dp"
         android:background="#E7D0C8"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
