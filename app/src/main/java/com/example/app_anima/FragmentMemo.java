@@ -2,6 +2,8 @@ package com.example.app_anima;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -77,7 +79,7 @@ public class FragmentMemo extends Fragment {
 
     public void drawLineChart(){
         ArrayList<Entry> entries = new ArrayList<>();
-        final String[] labelList = new String[]{"AM12", "AM1", "AM2", "AM3", "AM4", "AM5", "AM6"};
+        final String[] labelList = new String[]{"AM12", "AM1", "AM2", "AM3", "AM4", "AM5", "AM6", "AM7", "AM8", "AM9", "AM10", "AM11", "PM12", "PM1"};
         entries.add(new BarEntry(0,500));
         entries.add(new BarEntry(1,100));
         entries.add(new BarEntry(2,700));
@@ -85,6 +87,13 @@ public class FragmentMemo extends Fragment {
         entries.add(new BarEntry(4,1000));
         entries.add(new BarEntry(5,600));
         entries.add(new BarEntry(6,2000));
+        entries.add(new BarEntry(7,500));
+        entries.add(new BarEntry(8,100));
+        entries.add(new BarEntry(9,700));
+        entries.add(new BarEntry(10,300));
+        entries.add(new BarEntry(11,1000));
+        entries.add(new BarEntry(12,600));
+        entries.add(new BarEntry(13,2000));
 
         LineDataSet lineDataSet = new LineDataSet(entries, "label");
         lineDataSet.setColor(Color.RED); //스타일 지정
@@ -104,7 +113,9 @@ public class FragmentMemo extends Fragment {
         lineChart.getAxisRight().setDrawAxisLine(false); //축과 나란한 선을 그리는지
         lineChart.getAxisRight().setDrawGridLines(false); //격자 선을 그릴수 있는지
         lineChart.getAxisRight().setDrawLabels(false); //축의 레이블을 그릴수 있는지
-        lineChart.getAxisRight().setUseAutoScaleMaxRestriction(true); //뷰포트가 변경될때마다 y축이 현재 x축 범위의 최소 및 최대 y값으로 자동 조정
+        lineChart.setHighlightPerTapEnabled(false); //하이라이트 없애기
+        lineChart.setVisibleXRangeMaximum(3); //x축 표시 범위
+
         lineChart.invalidate(); //refresh
     }
 
