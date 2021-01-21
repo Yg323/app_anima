@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -32,6 +33,7 @@ import android.widget.Toast;
 import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -41,6 +43,7 @@ import com.dinuscxj.progressbar.CircleProgressBar;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -50,13 +53,16 @@ import app.akexorcist.bluetotohspp.library.DeviceList;
 
 public class FragmentHome extends Fragment {
 
-    private ImageButton btn_menu,circle_add,circle_minus;
+    private ImageButton btn_menu, circle_add, circle_minus;
     private ImageButton btn_feedinput; // 사료 입력 버튼 선언
     private TextView tv_calorie;
     private ScrollView scrollView;
     private LinearLayout appbar, vp_layout;
-    private TextView tv_menu,tv_water,tv_temp,go_jog;
+    private TextView tv_menu, tv_water, tv_temp, go_jog;
     private ListView listView;
+    private LinearLayout parent_layout;
+    private View[] dogContent = new View[8];
+    private String[] dogContentID = {"running_time", "food", "sleep", "weight", "heart", "stress", "water", "body_temperature"};
     private ArrayList<Drawable> mList;
     private ViewPager viewPager;
     private ADScrollAdapter adScrollAdapter;
@@ -70,46 +76,56 @@ public class FragmentHome extends Fragment {
     private int water_count, nweek;
     //블루투스
     private BluetoothSPP bt;
-    int cnt=0; float tempSum=0;
+    int cnt = 0;
+    float tempSum = 0;
     int step;
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         final ViewGroup viewGroup = (ViewGroup) inflater.inflate(R.layout.fragment_home, container, false);
-        btn_feedinput = (ImageButton) viewGroup.findViewById(R.id.btn_feedinput); // 사료 입력 버튼
-        tv_calorie = (TextView) viewGroup.findViewById(R.id.calory);
-        btn_menu = (ImageButton) viewGroup.findViewById(R.id.btn_menu);
-        circle_add = (ImageButton) viewGroup.findViewById(R.id.circle_add);
-        circle_minus = (ImageButton) viewGroup.findViewById(R.id.circle_minus);
-        scrollView = (ScrollView) viewGroup.findViewById(R.id.sv_main);
-        appbar = (LinearLayout) viewGroup.findViewById(R.id.appbar);
-        tv_menu = (TextView) viewGroup.findViewById(R.id.tv_menu);
-        tv_water = (TextView) viewGroup.findViewById(R.id.tv_water);
-        tv_temp = (TextView) viewGroup.findViewById(R.id.tv_temp);
-        go_jog = (TextView) viewGroup.findViewById(R.id.go_jog);
-        viewPager = (ViewPager) viewGroup.findViewById(R.id.viewPager);
-        vp_layout = (LinearLayout) viewGroup.findViewById(R.id.vp_layout);
-        circleProgressBar = (CircleProgressBar) viewGroup.findViewById(R.id.cpb_circlebar);
-        listView = (ListView) viewGroup.findViewById(R.id.drawer_menulist);
-
+        parent_layout = viewGroup.findViewById(R.id.parent_layout);
+        btn_feedinput = viewGroup.findViewById(R.id.btn_feedinput); // 사료 입력 버튼
+        tv_calorie = viewGroup.findViewById(R.id.calory);
+        btn_menu = viewGroup.findViewById(R.id.btn_menu);
+        circle_add = viewGroup.findViewById(R.id.circle_add);
+        circle_minus = viewGroup.findViewById(R.id.circle_minus);
+        scrollView = viewGroup.findViewById(R.id.sv_main);
+        appbar = viewGroup.findViewById(R.id.appbar);
+        tv_menu = viewGroup.findViewById(R.id.tv_menu);
+        tv_water = viewGroup.findViewById(R.id.tv_water);
+        tv_temp = viewGroup.findViewById(R.id.tv_temp);
+        go_jog = viewGroup.findViewById(R.id.go_jog);
+        viewPager = viewGroup.findViewById(R.id.viewPager);
+        vp_layout = viewGroup.findViewById(R.id.vp_layout);
+        circleProgressBar = viewGroup.findViewById(R.id.cpb_circlebar);
+        listView = viewGroup.findViewById(R.id.drawer_menulist);
+        String packName = Objects.requireNonNull(this.getActivity()).getPackageName();
+        for (int i = 0; i < dogContentID.length; i++) {
+            String name = "dog_" + dogContentID[i];
+            int id = getResources().getIdentifier(name, "id", packName);
+            dogContent[i] = viewGroup.findViewById(id);
+        }
+        /*parent_layout.removeView(dogContent[0]);
+        parent_layout.addView(dogContent[0]);*/
         //물 + 걸음수 초기화
         Calendar cal = Calendar.getInstance();
         nweek = cal.get(Calendar.DAY_OF_WEEK); //요일 구하기
-        if(PreferenceManager.getInt(getContext(),"nweek")!=nweek) {
+        if (PreferenceManager.getInt(getContext(), "nweek") != nweek) {
             PreferenceManager.setInt(getContext(), "water_count", 0);
-            PreferenceManager.setInt(getContext(),"dog_step",0);
-            PreferenceManager.setInt(getContext(),"nweek",nweek);
+            PreferenceManager.setInt(getContext(), "dog_step", 0);
+            PreferenceManager.setInt(getContext(), "nweek", nweek);
         }
-        water_count = PreferenceManager.getInt(getContext(),"water_count");
-        step = PreferenceManager.getInt(getContext(),"dog_step");
+        water_count = PreferenceManager.getInt(getContext(), "water_count");
+        step = PreferenceManager.getInt(getContext(), "dog_step");
         tv_water.setText(Integer.toString(water_count));
-        if(step > 1) {
-            go_jog.setText(Integer.toString(step)+"/1000걸음");//걸음수 초기값 10000으로 설정해두었는데 바꾸어야함
-            circleProgressBar.setProgress(step/10);
+        if (step > 1) {
+            go_jog.setText(step + "/1000걸음");//걸음수 초기값 10000으로 설정해두었는데 바꾸어야함
+            circleProgressBar.setProgress(step / 10);
         }
         circle_add.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                water_count+=100;
+                water_count += 100;
                 tv_water.setText(Integer.toString(water_count));
                 PreferenceManager.setInt(getContext(), "water_count", water_count);
             }
@@ -117,12 +133,11 @@ public class FragmentHome extends Fragment {
         circle_minus.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(water_count!=0) {
-                    water_count-=100;
+                if (water_count != 0) {
+                    water_count -= 100;
                     tv_water.setText(Integer.toString(water_count));
                     PreferenceManager.setInt(getContext(), "water_count", water_count);
-                }
-                else{
+                } else {
                     tv_water.setText("0");
                     PreferenceManager.setInt(getContext(), "water_count", 0);
                 }
@@ -140,22 +155,22 @@ public class FragmentHome extends Fragment {
             public void onDataReceived(byte[] data, String message) {
                 System.out.println(message);
                 String[] array = message.split("=");
-                switch (array[0]){
-                    case "A" :
-                        Log.d("A 값 들어왔음",array[1]);
+                switch (array[0]) {
+                    case "A":
+                        Log.d("A 값 들어왔음", array[1]);
                         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                         String[] A = array[1].split(",");
                         float a_x = Float.parseFloat(A[0]);
-                        float a_x1 = PreferenceManager.getFloat(getContext(),"AX");
-                        if(a_x1==0.0) a_x1=a_x;
-                        PreferenceManager.setFloat(getContext(),"AX",a_x);
-                        if(Math.abs(a_x-a_x1)>200){
+                        float a_x1 = PreferenceManager.getFloat(getContext(), "AX");
+                        if (a_x1 == 0.0) a_x1 = a_x;
+                        PreferenceManager.setFloat(getContext(), "AX", a_x);
+                        if (Math.abs(a_x - a_x1) > 200) {
                             builder.setTitle("반려견의 상태를 확인해주세요!")        // 제목 설정
                                     .setMessage("다리를 확인해주세요! ")        // 메세지 설정
                                     .setCancelable(false)        // 뒤로 버튼 클릭시 취소 가능 설정
-                                    .setPositiveButton("확인", new DialogInterface.OnClickListener(){
+                                    .setPositiveButton("확인", new DialogInterface.OnClickListener() {
                                         // 확인 버튼 클릭시 설정
-                                        public void onClick(DialogInterface dialog, int whichButton){
+                                        public void onClick(DialogInterface dialog, int whichButton) {
                                             dialog.cancel();
                                         }
                                     });
@@ -163,39 +178,41 @@ public class FragmentHome extends Fragment {
                             dialog.show();    // 알림창 띄우기
                         }
                         break;
-                    case "V" : //7미만의 숫자가 나올 경우 걸음수 +1
-                        Log.d("V 값 들어왔음",array[1]);
+                    case "V": //7미만의 숫자가 나올 경우 걸음수 +1
+                        Log.d("V 값 들어왔음", array[1]);
                         String[] V = array[1].split(",");
-                        int minus =0; int stepCnt=0;
+                        int minus = 0;
+                        int stepCnt = 0;
                         for (String s : V) {
                             if (Float.parseFloat(s) < 7) {
                                 if (Float.parseFloat(s) < 0) minus++;
                                 stepCnt++;
                             }
                         }
-                        if(minus<8){
-                            step+=stepCnt;
-                            PreferenceManager.setInt(getContext(),"dog_step",step);
-                            go_jog.setText(Integer.toString(step)+"/1000걸음"); //걸음수 초기값 1000으로 설정해두었는데 바꾸어야함
+                        if (minus < 8) {
+                            step += stepCnt;
+                            PreferenceManager.setInt(getContext(), "dog_step", step);
+                            go_jog.setText(Integer.toString(step) + "/1000걸음"); //걸음수 초기값 1000으로 설정해두었는데 바꾸어야함
                             //산책
-                            circleProgressBar.setProgress(step/10);
+                            circleProgressBar.setProgress(step / 10);
                         }
                         break;
-                    case "P" :
-                        Log.d("P 값 들어왔음",array[1]);
+                    case "P":
+                        Log.d("P 값 들어왔음", array[1]);
                         break;
-                    case "T" :
-                        Log.d("온도 값 들어왔음",array[1]);
+                    case "T":
+                        Log.d("온도 값 들어왔음", array[1]);
                         String[] temp = array[1].split("°C");
-                        tempSum+=Float.parseFloat(temp[0]);
+                        tempSum += Float.parseFloat(temp[0]);
                         cnt++;
                         Log.d("cnt값이당", String.valueOf(cnt));
 
-                        if(cnt==5){
-                            PreferenceManager.setFloat(getContext(),"Temperature", (float) (Math.round((tempSum) * 20) / 100.0));
+                        if (cnt == 5) {
+                            PreferenceManager.setFloat(getContext(), "Temperature", (float) (Math.round((tempSum) * 20) / 100.0));
                             Log.d("tempSum", String.valueOf(Math.round((tempSum) * 20) / 100.0));
-                            tv_temp.setText(String.valueOf(PreferenceManager.getFloat(getContext(),"Temperature")));
-                            tempSum=0;cnt=0;
+                            tv_temp.setText(String.valueOf(PreferenceManager.getFloat(getContext(), "Temperature")));
+                            tempSum = 0;
+                            cnt = 0;
                         }
                         break;
                 }
@@ -204,28 +221,27 @@ public class FragmentHome extends Fragment {
 
         bt.setBluetoothConnectionListener(new BluetoothSPP.BluetoothConnectionListener() { //연결됐을 때
             public void onDeviceConnected(String name, String address) {
-                Log.d("연결됐을때","Connected to " + name + "\n" + address);
+                Log.d("연결됐을때", "Connected to " + name + "\n" + address);
             }
 
             public void onDeviceDisconnected() { //연결해제
-                Log.d("연결해제","Connection lost");
+                Log.d("연결해제", "Connection lost");
             }
 
             public void onDeviceConnectionFailed() { //연결실패
-                Log.d("연결실패","연결실패");
+                Log.d("연결실패", "연결실패");
             }
         });
 
 
-
         //drawer 리스트 뷰
         final String[] items = {"블루투스 연결"};
-        ArrayAdapter adapter = new ArrayAdapter(getContext(), android.R.layout.simple_list_item_1, items) ;
+        ArrayAdapter adapter = new ArrayAdapter(getContext(), android.R.layout.simple_list_item_1, items);
         listView.setAdapter(adapter);
-        listView.setOnItemClickListener(new ListView.OnItemClickListener(){
+        listView.setOnItemClickListener(new ListView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView parent, View v, int position, long id) {
-                switch (position){
+                switch (position) {
                     case 0:
                         if (bt.getServiceState() == BluetoothState.STATE_CONNECTED) {
                             bt.disconnect();
@@ -236,48 +252,46 @@ public class FragmentHome extends Fragment {
                         break;
                 }
                 // close drawer.
-                DrawerLayout drawer = (DrawerLayout) viewGroup.findViewById(R.id.drawer) ;
-                drawer.closeDrawer(Gravity.LEFT) ;
+                DrawerLayout drawer = (DrawerLayout) viewGroup.findViewById(R.id.drawer);
+                drawer.closeDrawer(Gravity.LEFT);
             }
         });
 
 
-
         //drawer
-        drawer = (DrawerLayout) viewGroup.findViewById(R.id.drawer) ;
+        drawer = viewGroup.findViewById(R.id.drawer);
         btn_menu.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!drawer.isDrawerOpen(Gravity.LEFT)) {
-                    drawer.openDrawer(Gravity.LEFT) ;
+                    drawer.openDrawer(Gravity.LEFT);
                 }
                 if (drawer.isDrawerOpen(Gravity.LEFT)) {
-                    drawer.closeDrawer(Gravity.LEFT) ;
+                    drawer.closeDrawer(Gravity.LEFT);
                 }
             }
         });
 
         //광고창
         mList = new ArrayList<>();
-        mList.add(ResourcesCompat.getDrawable(getResources(),R.drawable.img_ad1,null));
-        mList.add(ResourcesCompat.getDrawable(getResources(),R.drawable.img_ad2,null));
-        mList.add(ResourcesCompat.getDrawable(getResources(),R.drawable.img_ad3,null));
-        mList.add(ResourcesCompat.getDrawable(getResources(),R.drawable.img_ad4,null));
-        adScrollAdapter = new ADScrollAdapter(getContext(),mList);
+        mList.add(ResourcesCompat.getDrawable(getResources(), R.drawable.img_ad1, null));
+        mList.add(ResourcesCompat.getDrawable(getResources(), R.drawable.img_ad2, null));
+        mList.add(ResourcesCompat.getDrawable(getResources(), R.drawable.img_ad3, null));
+        mList.add(ResourcesCompat.getDrawable(getResources(), R.drawable.img_ad4, null));
+        adScrollAdapter = new ADScrollAdapter(getContext(), mList);
         viewPager.setAdapter(adScrollAdapter);
 
         final Handler handler = new Handler();
         final Runnable Update = new Runnable() {
             @Override
             public void run() {
-                if(load) {
+                if (load) {
                     if (viewPager.getCurrentItem() == adScrollAdapter.getCount() - 1) {
                         viewPager.setCurrentItem(0, true);
                     } else {
                         viewPager.setCurrentItem(viewPager.getCurrentItem() + 1, true);
                     }
-                }
-                else{
+                } else {
                     load = true;
                     viewPager.setCurrentItem(0, true);
                 }
@@ -298,12 +312,11 @@ public class FragmentHome extends Fragment {
             @Override
             public void onScrollChanged() {
                 int scrollY = scrollView.getScrollY(); // For ScrollView
-                if(scrollY>=vp_layout.getBottom()){
+                if (scrollY >= vp_layout.getBottom()) {
                     appbar.setBackgroundColor(Color.parseColor("#E7D0C8"));
                     tv_menu.setVisibility(View.VISIBLE);
                     btn_menu.setColorFilter(Color.parseColor("#000000"));
-                }
-                else {
+                } else {
                     appbar.setBackgroundColor(Color.parseColor("#00E7D0C8"));
                     tv_menu.setVisibility(View.INVISIBLE);
                     btn_menu.setColorFilter(Color.parseColor("#FFFFFF"));
@@ -334,19 +347,19 @@ public class FragmentHome extends Fragment {
                 final Button btnApply, btnCancel;
                 final boolean isFood;
 
-                mRadioGroup = (RadioGroup) view.findViewById(R.id.radiocategory);
-                radioButtonFood = (RadioButton) view.findViewById(R.id.radiofood);
-                radioButtonSnack = (RadioButton) view.findViewById(R.id.radiosnack);
-                editTextInputFeed = (EditText) view.findViewById(R.id.input_feed);
-                btnPlus100 = (Button) view.findViewById(R.id.btn_plus100);
-                btnPlus10 = (Button) view.findViewById(R.id.btn_plus10);
-                btnPlus1 = (Button) view.findViewById(R.id.btn_plus1);
-                btnMinus100 = (Button) view.findViewById(R.id.btn_minus100);
-                btnMinus10 = (Button) view.findViewById(R.id.btn_minus10);
-                btnMinus1 = (Button) view.findViewById(R.id.btn_minus1);
-                editTextInputCal = (EditText) view.findViewById(R.id.input_calorie);
-                btnApply = (Button) view.findViewById(R.id.btn_apply);
-                btnCancel = (Button) view.findViewById(R.id.btn_cancel);
+                mRadioGroup = view.findViewById(R.id.radiocategory);
+                radioButtonFood = view.findViewById(R.id.radiofood);
+                radioButtonSnack = view.findViewById(R.id.radiosnack);
+                editTextInputFeed = view.findViewById(R.id.input_feed);
+                btnPlus100 = view.findViewById(R.id.btn_plus100);
+                btnPlus10 = view.findViewById(R.id.btn_plus10);
+                btnPlus1 = view.findViewById(R.id.btn_plus1);
+                btnMinus100 = view.findViewById(R.id.btn_minus100);
+                btnMinus10 = view.findViewById(R.id.btn_minus10);
+                btnMinus1 = view.findViewById(R.id.btn_minus1);
+                editTextInputCal = view.findViewById(R.id.input_calorie);
+                btnApply = view.findViewById(R.id.btn_apply);
+                btnCancel = view.findViewById(R.id.btn_cancel);
 
                 RadioGroup.OnCheckedChangeListener radioGroupButtonChangeListener = new RadioGroup.OnCheckedChangeListener() {
                     @Override
@@ -432,7 +445,6 @@ public class FragmentHome extends Fragment {
         });
 
 
-
         return viewGroup;
     }
 
@@ -445,6 +457,7 @@ public class FragmentHome extends Fragment {
     public CharSequence format(int progress, int max) {
         return String.format(DEFAULT_PATTERN, (int) ((float) progress / (float) max * 100));
     }
+
     //블루투스
     public void onDestroy() {
         super.onDestroy();
@@ -465,7 +478,6 @@ public class FragmentHome extends Fragment {
     }
 
 
-
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == BluetoothState.REQUEST_CONNECT_DEVICE) {
@@ -479,7 +491,7 @@ public class FragmentHome extends Fragment {
                 Toast.makeText(getContext()
                         , "Bluetooth was not enabled."
                         , Toast.LENGTH_SHORT).show();
-                Log.d("블루투스","Bluetooth was not enabled.");
+                Log.d("블루투스", "Bluetooth was not enabled.");
             }
         }
     }
