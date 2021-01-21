@@ -40,7 +40,6 @@ public class RecyTrainAdapter extends RecyclerView.Adapter<RecyTrainAdapter.View
     // onBindViewHolder() - position에 해당하는 데이터를 뷰홀더의 아이템뷰에 표시.
     @Override
     public void onBindViewHolder(RecyTrainAdapter.ViewHolder holder, int position) {
-
         RecyTrainItem item = mData.get(position) ;
         holder.iv_trainIcon.setImageDrawable(item.getDrawable()) ;
         holder.tv_trainTitle.setText(item.getTitle()) ;

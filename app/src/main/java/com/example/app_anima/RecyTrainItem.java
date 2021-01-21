@@ -5,6 +5,15 @@ import android.graphics.drawable.Drawable;
 public class RecyTrainItem {
     private Drawable drawable;
     private String title;
+    private int id;
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public Drawable getDrawable() {
         return drawable;
