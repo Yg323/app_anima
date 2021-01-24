@@ -1,16 +1,12 @@
 package com.example.app_anima;
 
-import android.app.Activity;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.bluetooth.BluetoothAdapter;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,7 +24,6 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
@@ -48,87 +43,93 @@ import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import app.akexorcist.bluetotohspp.library.BluetoothSPP;
-import app.akexorcist.bluetotohspp.library.BluetoothState;
-import app.akexorcist.bluetotohspp.library.DeviceList;
-
 public class FragmentHome extends Fragment {
 
-    private ImageButton btn_menu, circle_add, circle_minus;
-    private ImageButton btn_feedinput; // 사료 입력 버튼 선언
-    private ScrollView scrollView;
-    private LinearLayout appbar, vp_layout;
-    private ConstraintLayout dog_running_time;
-    private TextView tv_calorie, tv_menu, tv_water, tv_temp, tv_bpm, go_jog, tv_run_step, tv_walk_step;
+    private TextView tv_calorie, tv_menu, tv_water, tv_temp, tv_bpm, tv_go_jog, tv_run_step, tv_walk_step;
     private ListView listView;
-    private LinearLayout parent_layout;
+    private ScrollView scrollView;
+
+    private LinearLayout appbar, vp_layout, parent_layout;
+    private ConstraintLayout dog_running_time;
+    private DrawerLayout drawer_ad;
+
+    private ImageButton btn_menu, btn_feedinput, circle_add, circle_minus;
+
     private final View[] dogContent = new View[8];
     private final String[] dogContentID = {"running_time", "food", "sleep", "weight", "heart", "stress", "water", "body_temperature"};
-    private ArrayList<Drawable> mList;
-    private ViewPager viewPager;
-    private ADScrollAdapter adScrollAdapter;
-    private boolean load = false;
-    private Timer timer;
-    final long DELAY_MS = 500;//delay in milliseconds before task is to be executed
-    final long PERIOD_MS = 3000; // time in milliseconds between successive task executions.
-    private DrawerLayout drawer;
-    private static final String DEFAULT_PATTERN = "%d%%";
-    private CircleProgressBar circleProgressBar;
-    private int water_count, nweek;
+    private final long DELAY_MS = 500;
+    private final long PERIOD_MS = 3000;
+    private final int JOG_GOAL = 1000;
 
-    //블루투스
-    private BluetoothSPP bt;
-    int cnt = 0;
-    float tempSum = 0;
-    int walk_step, run_step;
+    private ArrayList<Drawable> mList;
+    private ADScrollAdapter adScrollAdapter;
+    private CircleProgressBar circleProgressBar;
+    private ViewPager viewPager;
+    private Timer timer;
+
+    private boolean load = false;
+    private int water_count, nWeek, tempCnt, walk_step, run_step;
+    private float tempSum = 0;
+    private String txt_go_jog;
+
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         final ViewGroup viewGroup = (ViewGroup) inflater.inflate(R.layout.fragment_home, container, false);
-        parent_layout = viewGroup.findViewById(R.id.parent_layout);
-        btn_feedinput = viewGroup.findViewById(R.id.btn_feedinput); // 사료 입력 버튼
+        String packName = Objects.requireNonNull(this.getActivity()).getPackageName();
+
         tv_calorie = viewGroup.findViewById(R.id.calory);
-        btn_menu = viewGroup.findViewById(R.id.btn_menu);
-        circle_add = viewGroup.findViewById(R.id.circle_add);
-        circle_minus = viewGroup.findViewById(R.id.circle_minus);
-        scrollView = viewGroup.findViewById(R.id.sv_main);
-        appbar = viewGroup.findViewById(R.id.appbar);
         tv_menu = viewGroup.findViewById(R.id.tv_menu);
         tv_water = viewGroup.findViewById(R.id.tv_water);
         tv_temp = viewGroup.findViewById(R.id.tv_temp);
         tv_bpm = viewGroup.findViewById(R.id.tv_bpm);
+        tv_go_jog = viewGroup.findViewById(R.id.go_jog);
         tv_run_step = viewGroup.findViewById(R.id.tv_run_step);
         tv_walk_step = viewGroup.findViewById(R.id.tv_walk_step);
-        go_jog = viewGroup.findViewById(R.id.go_jog);
-        viewPager = viewGroup.findViewById(R.id.viewPager);
-        vp_layout = viewGroup.findViewById(R.id.vp_layout);
-        circleProgressBar = viewGroup.findViewById(R.id.cpb_circlebar);
-        listView = viewGroup.findViewById(R.id.drawer_menulist);
-        dog_running_time = viewGroup.findViewById(R.id.dog_running_time);
 
-        String packName = Objects.requireNonNull(this.getActivity()).getPackageName();
+        listView = viewGroup.findViewById(R.id.drawer_menulist);
+        scrollView = viewGroup.findViewById(R.id.sv_main);
+
+        appbar = viewGroup.findViewById(R.id.appbar);
+        vp_layout = viewGroup.findViewById(R.id.vp_layout);
+        parent_layout = viewGroup.findViewById(R.id.parent_layout);
+        dog_running_time = viewGroup.findViewById(R.id.dog_running_time);
+        drawer_ad = viewGroup.findViewById(R.id.drawer);
+
+        btn_feedinput = viewGroup.findViewById(R.id.btn_feedinput);
+        btn_menu = viewGroup.findViewById(R.id.btn_menu);
+        circle_add = viewGroup.findViewById(R.id.circle_add);
+        circle_minus = viewGroup.findViewById(R.id.circle_minus);
+
+        viewPager = viewGroup.findViewById(R.id.viewPager);
+        circleProgressBar = viewGroup.findViewById(R.id.cpb_circlebar);
+
         for (int i = 0; i < dogContentID.length; i++) {
             String name = "dog_" + dogContentID[i];
             int id = getResources().getIdentifier(name, "id", packName);
             dogContent[i] = viewGroup.findViewById(id);
         }
 
-        //물 + 걸음수 초기화
+        /*Initial Setting*/
         Calendar cal = Calendar.getInstance();
-        nweek = cal.get(Calendar.DAY_OF_WEEK); //요일 구하기
-        if (PreferenceManager.getInt(getContext(), "nweek") != nweek) {
+        nWeek = cal.get(Calendar.DAY_OF_WEEK);
+        if (PreferenceManager.getInt(getContext(), "nweek") != nWeek) {
             PreferenceManager.setInt(getContext(), "water_count", 0);
-            PreferenceManager.setInt(getContext(), "dog_step", 0);
-            PreferenceManager.setInt(getContext(), "nweek", nweek);
+            PreferenceManager.setInt(getContext(), "run_step", 0);
+            PreferenceManager.setInt(getContext(), "walk_step", 0);
+            PreferenceManager.setInt(getContext(), "nweek", nWeek);
         }
         water_count = PreferenceManager.getInt(getContext(), "water_count");
         run_step = PreferenceManager.getInt(getContext(), "run_step");
         walk_step = PreferenceManager.getInt(getContext(), "walk_step");
         tv_water.setText(Integer.toString(water_count));
         if ((run_step + walk_step) > 1) {
-            go_jog.setText((run_step + walk_step) + "/1000걸음");//걸음수 초기값 10000으로 설정해두었는데 바꾸어야함
-            circleProgressBar.setProgress((run_step + walk_step) / 10);
+            txt_go_jog = (run_step + walk_step) + "/"+ JOG_GOAL +"걸음";
+            tv_go_jog.setText(txt_go_jog);
+            circleProgressBar.setProgress((run_step + walk_step) * 100 / JOG_GOAL);
         }
+
+
         // 걸음수에 따라서 오늘의 운동기록
         if ((run_step + walk_step) > 1) {
             dog_running_time.setVisibility(View.VISIBLE);
@@ -178,149 +179,18 @@ public class FragmentHome extends Fragment {
             }
         });
 
-        /*parent_layout.addView(dogContent[0]);
-        parent_layout.removeView(dogContent[0]);*/
-        bt = new BluetoothSPP(getContext()); //Initializing
-
-        if (!bt.isBluetoothAvailable()) { //블루투스 사용 불가
-            Toast.makeText(getContext()
-                    , "Bluetooth is not available"
-                    , Toast.LENGTH_SHORT).show();
-        }
-        bt.setOnDataReceivedListener(new BluetoothSPP.OnDataReceivedListener() { //데이터 수신
-            public void onDataReceived(byte[] data, String message) {
-                System.out.println(message);
-                String[] array = message.split("=");
-                switch (array[0]) {
-                    case "A":
-                        Log.d("A 값 들어왔음", array[1]);
-                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                        String[] A = array[1].split(",");
-                        float a_x = Float.parseFloat(A[0]);
-                        float a_x1 = PreferenceManager.getFloat(getContext(), "AX");
-                        if (a_x1 == 0.0) a_x1 = a_x;
-                        PreferenceManager.setFloat(getContext(), "AX", a_x);
-                        if (Math.abs(a_x - a_x1) > 200) {
-                            builder.setTitle("반려견의 상태를 확인해주세요!")        // 제목 설정
-                                    .setMessage("다리를 확인해주세요! ")        // 메세지 설정
-                                    .setCancelable(false)        // 뒤로 버튼 클릭시 취소 가능 설정
-                                    .setPositiveButton("확인", new DialogInterface.OnClickListener() {
-                                        // 확인 버튼 클릭시 설정
-                                        public void onClick(DialogInterface dialog, int whichButton) {
-                                            dialog.cancel();
-                                        }
-                                    });
-                            AlertDialog dialog = builder.create();    // 알림창 객체 생성
-                            dialog.show();    // 알림창 띄우기
-                        }
-                        break;
-                    case "V": //7미만의 숫자가 나올 경우 걸음수 +1
-                        /* 7미만의 수치가 나올 경우 걸음수 +1 , 4이상7미만의 경우 걷기, 4미만의 경우 뛰기 */
-                        Log.d("V 값 들어왔음", array[1]);
-                        String[] V = array[1].split(",");
-                        int minus = 0, stepCnt = 0;
-                        boolean isRunning = false;
-                        for (String s : V) {
-                            if (Float.parseFloat(s) < 7) {
-                                if (Float.parseFloat(s) < 0) minus++;
-                                stepCnt++;
-                            }
-                            if (Float.parseFloat(s) < 4) { // 뛰기
-                                isRunning = true;
-                            }
-                        }
-                        if (minus < 8) {
-                            if (isRunning) {
-                                run_step += stepCnt;
-                                PreferenceManager.setInt(getContext(), "run_step", run_step);
-                            } else {
-                                walk_step += stepCnt;
-                                PreferenceManager.setInt(getContext(), "walk_step", walk_step);
-                            }
-                            go_jog.setText((run_step + walk_step) + "/1000걸음"); //걸음수 초기값 1000으로 설정해두었는데 바꾸어야함
-                            //산책
-                            circleProgressBar.setProgress((run_step + walk_step) / 10);
-                            // 운동기록
-                            dog_running_time.setVisibility(View.VISIBLE);
-                            int sumStep = run_step + walk_step;
-                            int run_percent = (run_step / sumStep) * 100;
-                            int walk_percent = 100 - run_percent;
-                            Log.d("sumStep", sumStep+"");
-                            Log.d("run_percent", run_percent+"");
-                            Log.d("walk_percent", walk_percent+"");
-                            String run_text = run_percent + "%";
-                            String walk_text = walk_percent + "%";
-                            LinearLayout.LayoutParams param_run
-                                    = (LinearLayout.LayoutParams) tv_run_step.getLayoutParams();
-                            LinearLayout.LayoutParams param_walk
-                                    = (LinearLayout.LayoutParams) tv_walk_step.getLayoutParams();
-                            if (walk_percent > 30 && run_percent > 30) {
-                                tv_run_step.setText(run_text);
-                                tv_walk_step.setText(walk_text);
-                            }else if (walk_percent < run_percent){
-                                tv_run_step.setText(run_text);
-                            }else{
-                                tv_walk_step.setText(walk_text);
-                            }
-                            param_run.weight = run_percent;
-                            param_walk.weight = walk_percent;
-                            tv_run_step.setLayoutParams(param_run);
-                            tv_walk_step.setLayoutParams(param_walk);
-                        }
-                        break;
-                    case "P":
-                        Log.d("심박수 값 들어왔음", array[1]);
-                        tv_bpm.setText(array[1]);
-                        break;
-                    case "T":
-                        Log.d("온도 값 들어왔음", array[1]);
-                        String[] temp = array[1].split("°C");
-                        tempSum += Float.parseFloat(temp[0]);
-                        cnt++;
-                        Log.d("cnt값이당", String.valueOf(cnt));
-
-                        if (cnt == 5) {
-                            PreferenceManager.setFloat(getContext(), "Temperature", (float) (Math.round((tempSum) * 20) / 100.0));
-                            Log.d("tempSum", String.valueOf(Math.round((tempSum) * 20) / 100.0));
-                            tv_temp.setText(String.valueOf(PreferenceManager.getFloat(getContext(), "Temperature")));
-                            tempSum = 0;
-                            cnt = 0;
-                        }
-                        break;
-                }
-            }
-        });
-
-        bt.setBluetoothConnectionListener(new BluetoothSPP.BluetoothConnectionListener() { //연결됐을 때
-            public void onDeviceConnected(String name, String address) {
-                Log.d("연결됐을때", "Connected to " + name + "\n" + address);
-            }
-
-            public void onDeviceDisconnected() { //연결해제
-                Log.d("연결해제", "Connection lost");
-            }
-
-            public void onDeviceConnectionFailed() { //연결실패
-                Log.d("연결실패", "연결실패");
-            }
-        });
-
 
         //drawer 리스트 뷰
         final String[] items = {"블루투스 연결"};
         ArrayAdapter adapter = new ArrayAdapter(getContext(), android.R.layout.simple_list_item_1, items);
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(new ListView.OnItemClickListener() {
+            @SuppressLint("RtlHardcoded")
             @Override
             public void onItemClick(AdapterView parent, View v, int position, long id) {
                 switch (position) {
                     case 0:
-                        if (bt.getServiceState() == BluetoothState.STATE_CONNECTED) {
-                            bt.disconnect();
-                        } else {
-                            Intent intent = new Intent(getContext(), DeviceList.class);
-                            startActivityForResult(intent, BluetoothState.REQUEST_CONNECT_DEVICE);
-                        }
+
                         break;
                 }
                 // close drawer.
@@ -331,15 +201,16 @@ public class FragmentHome extends Fragment {
 
 
         //drawer
-        drawer = viewGroup.findViewById(R.id.drawer);
+
         btn_menu.setOnClickListener(new OnClickListener() {
+            @SuppressLint("RtlHardcoded")
             @Override
             public void onClick(View v) {
-                if (!drawer.isDrawerOpen(Gravity.LEFT)) {
-                    drawer.openDrawer(Gravity.LEFT);
+                if (!drawer_ad.isDrawerOpen(Gravity.LEFT)) {
+                    drawer_ad.openDrawer(Gravity.LEFT);
                 }
-                if (drawer.isDrawerOpen(Gravity.LEFT)) {
-                    drawer.closeDrawer(Gravity.LEFT);
+                if (drawer_ad.isDrawerOpen(Gravity.LEFT)) {
+                    drawer_ad.closeDrawer(Gravity.LEFT);
                 }
             }
         });
@@ -401,7 +272,7 @@ public class FragmentHome extends Fragment {
             @Override
             public void onClick(View v) {
                 final double curCal;
-                if (tv_calorie.getText().toString().equals(null)) {
+                if (tv_calorie.getText().toString() == null) {
                     curCal = 0;
                 } else {
                     curCal = Double.parseDouble(tv_calorie.getText().toString());
@@ -526,46 +397,6 @@ public class FragmentHome extends Fragment {
         timer.cancel();
     }
 
-    public CharSequence format(int progress, int max) {
-        return String.format(DEFAULT_PATTERN, (int) ((float) progress / (float) max * 100));
-    }
-
-    //블루투스
-    public void onDestroy() {
-        super.onDestroy();
-        bt.stopService(); //블루투스 중지
-    }
-
-    public void onStart() {
-        super.onStart();
-        if (!bt.isBluetoothEnabled()) { //
-            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(intent, BluetoothState.REQUEST_ENABLE_BT);
-        } else {
-            if (!bt.isServiceAvailable()) {
-                bt.setupService();
-                bt.startService(BluetoothState.DEVICE_OTHER); //DEVICE_ANDROID는 안드로이드 기기 끼리
-            }
-        }
-    }
-
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == BluetoothState.REQUEST_CONNECT_DEVICE) {
-            if (resultCode == Activity.RESULT_OK)
-                bt.connect(data);
-        } else if (requestCode == BluetoothState.REQUEST_ENABLE_BT) {
-            if (resultCode == Activity.RESULT_OK) {
-                bt.setupService();
-                bt.startService(BluetoothState.DEVICE_OTHER);
-            } else {
-                Toast.makeText(getContext()
-                        , "Bluetooth was not enabled."
-                        , Toast.LENGTH_SHORT).show();
-                Log.d("블루투스", "Bluetooth was not enabled.");
-            }
-        }
-    }
 
 
 }
