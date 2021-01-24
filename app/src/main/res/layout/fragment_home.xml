@@ -85,6 +85,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="150dp"
                         android:layout_margin="10dp"
+                        android:visibility="visible"
                         android:background="@drawable/box_regular">
 
                         <ImageView
@@ -106,7 +107,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="16dp"
                             android:fontFamily="@font/nanum_baren_yet"
-                            android:text="운동"
+                            android:text="오늘의 운동 기록"
                             android:textSize="15dp"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
@@ -115,75 +116,65 @@
                             app:layout_constraintTop_toTopOf="parent"
                             app:layout_constraintVertical_bias="0.08" />
 
-                        <ImageButton
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:background="#00000000"
-                            android:src="@drawable/img_healtmemo"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
 
-                            app:layout_constraintHorizontal_bias="0.938"
-                            app:layout_constraintStart_toEndOf="@+id/textView"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintVertical_bias="0.0" />
-
-                        <androidx.constraintlayout.widget.ConstraintLayout
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="100dp"
+                            android:layout_height="0dp"
+                            android:layout_marginTop="20dp"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintHorizontal_bias="0.0"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintVertical_bias="0.76">
+                            app:layout_constraintTop_toBottomOf="@+id/textView">
+                            <TableLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_margin="10dp">
+                                <TableRow
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="0dp"
+                                    android:layout_weight="1">
+                                    <ImageView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="match_parent"
+                                        android:src="@drawable/icon_red_dog"
+                                        android:padding="5dp"
+                                        />
+                                    <TextView
+                                        android:id="@+id/tv_run_step"
+                                        android:background="#F92814"
+                                        android:layout_height="match_parent"
+                                        android:layout_width="0dp"
+                                        android:layout_marginTop="20dp"
+                                        android:layout_marginBottom="20dp"
+                                        android:text="50%"
+                                        android:textColor="@color/white"
+                                        android:fontFamily="@font/recipekorea"
+                                        android:gravity="center"
+                                        android:layout_weight="3"/>
+                                    <TextView
+                                        android:id="@+id/tv_walk_step"
+                                        android:background="#FED943"
+                                        android:layout_height="match_parent"
+                                        android:layout_width="0dp"
+                                        android:layout_marginTop="20dp"
+                                        android:layout_marginBottom="20dp"
+                                        android:text="50%"
+                                        android:textColor="@color/white"
+                                        android:fontFamily="@font/recipekorea"
+                                        android:gravity="center"
+                                        android:layout_weight="7"/>
+                                    <ImageView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="match_parent"
+                                        android:src="@drawable/icon_yellow_dog"
+                                        android:padding="5dp"
+                                        />
+                                    <ImageView/>
+                                </TableRow>
+                            </TableLayout>
 
-                            <ImageButton
-                                android:id="@+id/run_1"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginLeft="50dp"
-                                android:background="#00000000"
-                                android:src="@drawable/icon_runningdog"
-                                app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toTopOf="parent" />
-
-                            <ImageButton
-                                android:id="@+id/run_2"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:background="#00000000"
-                                android:src="@drawable/icon_playdog"
-                                app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintEnd_toStartOf="@id/run_3"
-                                app:layout_constraintStart_toEndOf="@id/run_1"
-                                app:layout_constraintTop_toTopOf="parent" />
-
-                            <ImageButton
-                                android:id="@+id/run_3"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:background="#00000000"
-                                android:src="@drawable/icon_bycycle"
-                                app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintEnd_toStartOf="@id/run_4"
-                                app:layout_constraintStart_toEndOf="@id/run_2"
-                                app:layout_constraintTop_toTopOf="parent" />
-
-                            <ImageButton
-                                android:id="@+id/run_4"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginRight="50dp"
-                                android:background="#00000000"
-                                android:src="@drawable/icon_more"
-                                app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintTop_toTopOf="parent" />
-
-                        </androidx.constraintlayout.widget.ConstraintLayout>
+                        </LinearLayout>
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
                     <androidx.constraintlayout.widget.ConstraintLayout

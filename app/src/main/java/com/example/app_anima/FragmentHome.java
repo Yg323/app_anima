@@ -34,6 +34,7 @@ import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -55,14 +56,14 @@ public class FragmentHome extends Fragment {
 
     private ImageButton btn_menu, circle_add, circle_minus;
     private ImageButton btn_feedinput; // 사료 입력 버튼 선언
-    private TextView tv_calorie;
     private ScrollView scrollView;
     private LinearLayout appbar, vp_layout;
-    private TextView tv_menu, tv_water, tv_temp, go_jog;
+    private ConstraintLayout dog_running_time;
+    private TextView tv_calorie, tv_menu, tv_water, tv_temp, tv_bpm, go_jog, tv_run_step, tv_walk_step;
     private ListView listView;
     private LinearLayout parent_layout;
-    private View[] dogContent = new View[8];
-    private String[] dogContentID = {"running_time", "food", "sleep", "weight", "heart", "stress", "water", "body_temperature"};
+    private final View[] dogContent = new View[8];
+    private final String[] dogContentID = {"running_time", "food", "sleep", "weight", "heart", "stress", "water", "body_temperature"};
     private ArrayList<Drawable> mList;
     private ViewPager viewPager;
     private ADScrollAdapter adScrollAdapter;
@@ -74,11 +75,12 @@ public class FragmentHome extends Fragment {
     private static final String DEFAULT_PATTERN = "%d%%";
     private CircleProgressBar circleProgressBar;
     private int water_count, nweek;
+
     //블루투스
     private BluetoothSPP bt;
     int cnt = 0;
     float tempSum = 0;
-    int step;
+    int walk_step, run_step;
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -94,19 +96,23 @@ public class FragmentHome extends Fragment {
         tv_menu = viewGroup.findViewById(R.id.tv_menu);
         tv_water = viewGroup.findViewById(R.id.tv_water);
         tv_temp = viewGroup.findViewById(R.id.tv_temp);
+        tv_bpm = viewGroup.findViewById(R.id.tv_bpm);
+        tv_run_step = viewGroup.findViewById(R.id.tv_run_step);
+        tv_walk_step = viewGroup.findViewById(R.id.tv_walk_step);
         go_jog = viewGroup.findViewById(R.id.go_jog);
         viewPager = viewGroup.findViewById(R.id.viewPager);
         vp_layout = viewGroup.findViewById(R.id.vp_layout);
         circleProgressBar = viewGroup.findViewById(R.id.cpb_circlebar);
         listView = viewGroup.findViewById(R.id.drawer_menulist);
+        dog_running_time = viewGroup.findViewById(R.id.dog_running_time);
+
         String packName = Objects.requireNonNull(this.getActivity()).getPackageName();
         for (int i = 0; i < dogContentID.length; i++) {
             String name = "dog_" + dogContentID[i];
             int id = getResources().getIdentifier(name, "id", packName);
             dogContent[i] = viewGroup.findViewById(id);
         }
-        /*parent_layout.removeView(dogContent[0]);
-        parent_layout.addView(dogContent[0]);*/
+
         //물 + 걸음수 초기화
         Calendar cal = Calendar.getInstance();
         nweek = cal.get(Calendar.DAY_OF_WEEK); //요일 구하기
@@ -116,11 +122,39 @@ public class FragmentHome extends Fragment {
             PreferenceManager.setInt(getContext(), "nweek", nweek);
         }
         water_count = PreferenceManager.getInt(getContext(), "water_count");
-        step = PreferenceManager.getInt(getContext(), "dog_step");
+        run_step = PreferenceManager.getInt(getContext(), "run_step");
+        walk_step = PreferenceManager.getInt(getContext(), "walk_step");
         tv_water.setText(Integer.toString(water_count));
-        if (step > 1) {
-            go_jog.setText(step + "/1000걸음");//걸음수 초기값 10000으로 설정해두었는데 바꾸어야함
-            circleProgressBar.setProgress(step / 10);
+        if ((run_step + walk_step) > 1) {
+            go_jog.setText((run_step + walk_step) + "/1000걸음");//걸음수 초기값 10000으로 설정해두었는데 바꾸어야함
+            circleProgressBar.setProgress((run_step + walk_step) / 10);
+        }
+        // 걸음수에 따라서 오늘의 운동기록
+        if ((run_step + walk_step) > 1) {
+            dog_running_time.setVisibility(View.VISIBLE);
+            int sumStep = run_step + walk_step;
+            int run_percent = run_step / sumStep * 100;
+            int walk_percent = 100 - run_percent;
+            String run_text = run_percent + "%";
+            String walk_text = walk_percent + "%";
+            LinearLayout.LayoutParams param_run
+                    = (LinearLayout.LayoutParams) tv_run_step.getLayoutParams();
+            LinearLayout.LayoutParams param_walk
+                    = (LinearLayout.LayoutParams) tv_walk_step.getLayoutParams();
+            if (walk_percent > 30 && run_percent > 30) {
+                tv_run_step.setText(run_text);
+                tv_walk_step.setText(walk_text);
+            }else if (walk_percent < run_percent){
+                tv_run_step.setText(run_text);
+            }else{
+                tv_walk_step.setText(walk_text);
+            }
+            param_run.weight = run_percent;
+            param_walk.weight = walk_percent;
+            tv_run_step.setLayoutParams(param_run);
+            tv_walk_step.setLayoutParams(param_walk);
+        } else {
+            dog_running_time.setVisibility(View.GONE);
         }
         circle_add.setOnClickListener(new OnClickListener() {
             @Override
@@ -144,6 +178,8 @@ public class FragmentHome extends Fragment {
             }
         });
 
+        /*parent_layout.addView(dogContent[0]);
+        parent_layout.removeView(dogContent[0]);*/
         bt = new BluetoothSPP(getContext()); //Initializing
 
         if (!bt.isBluetoothAvailable()) { //블루투스 사용 불가
@@ -179,26 +215,62 @@ public class FragmentHome extends Fragment {
                         }
                         break;
                     case "V": //7미만의 숫자가 나올 경우 걸음수 +1
+                        /* 7미만의 수치가 나올 경우 걸음수 +1 , 4이상7미만의 경우 걷기, 4미만의 경우 뛰기 */
                         Log.d("V 값 들어왔음", array[1]);
                         String[] V = array[1].split(",");
-                        int minus = 0;
-                        int stepCnt = 0;
+                        int minus = 0, stepCnt = 0;
+                        boolean isRunning = false;
                         for (String s : V) {
                             if (Float.parseFloat(s) < 7) {
                                 if (Float.parseFloat(s) < 0) minus++;
                                 stepCnt++;
                             }
+                            if (Float.parseFloat(s) < 4) { // 뛰기
+                                isRunning = true;
+                            }
                         }
                         if (minus < 8) {
-                            step += stepCnt;
-                            PreferenceManager.setInt(getContext(), "dog_step", step);
-                            go_jog.setText(Integer.toString(step) + "/1000걸음"); //걸음수 초기값 1000으로 설정해두었는데 바꾸어야함
+                            if (isRunning) {
+                                run_step += stepCnt;
+                                PreferenceManager.setInt(getContext(), "run_step", run_step);
+                            } else {
+                                walk_step += stepCnt;
+                                PreferenceManager.setInt(getContext(), "walk_step", walk_step);
+                            }
+                            go_jog.setText((run_step + walk_step) + "/1000걸음"); //걸음수 초기값 1000으로 설정해두었는데 바꾸어야함
                             //산책
-                            circleProgressBar.setProgress(step / 10);
+                            circleProgressBar.setProgress((run_step + walk_step) / 10);
+                            // 운동기록
+                            dog_running_time.setVisibility(View.VISIBLE);
+                            int sumStep = run_step + walk_step;
+                            int run_percent = (run_step / sumStep) * 100;
+                            int walk_percent = 100 - run_percent;
+                            Log.d("sumStep", sumStep+"");
+                            Log.d("run_percent", run_percent+"");
+                            Log.d("walk_percent", walk_percent+"");
+                            String run_text = run_percent + "%";
+                            String walk_text = walk_percent + "%";
+                            LinearLayout.LayoutParams param_run
+                                    = (LinearLayout.LayoutParams) tv_run_step.getLayoutParams();
+                            LinearLayout.LayoutParams param_walk
+                                    = (LinearLayout.LayoutParams) tv_walk_step.getLayoutParams();
+                            if (walk_percent > 30 && run_percent > 30) {
+                                tv_run_step.setText(run_text);
+                                tv_walk_step.setText(walk_text);
+                            }else if (walk_percent < run_percent){
+                                tv_run_step.setText(run_text);
+                            }else{
+                                tv_walk_step.setText(walk_text);
+                            }
+                            param_run.weight = run_percent;
+                            param_walk.weight = walk_percent;
+                            tv_run_step.setLayoutParams(param_run);
+                            tv_walk_step.setLayoutParams(param_walk);
                         }
                         break;
                     case "P":
-                        Log.d("P 값 들어왔음", array[1]);
+                        Log.d("심박수 값 들어왔음", array[1]);
+                        tv_bpm.setText(array[1]);
                         break;
                     case "T":
                         Log.d("온도 값 들어왔음", array[1]);
@@ -252,7 +324,7 @@ public class FragmentHome extends Fragment {
                         break;
                 }
                 // close drawer.
-                DrawerLayout drawer = (DrawerLayout) viewGroup.findViewById(R.id.drawer);
+                DrawerLayout drawer = viewGroup.findViewById(R.id.drawer);
                 drawer.closeDrawer(Gravity.LEFT);
             }
         });
@@ -477,7 +549,6 @@ public class FragmentHome extends Fragment {
         }
     }
 
-
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == BluetoothState.REQUEST_CONNECT_DEVICE) {
@@ -495,4 +566,6 @@ public class FragmentHome extends Fragment {
             }
         }
     }
+
+
 }
