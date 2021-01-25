@@ -15,9 +15,16 @@ public class LoadingActivity extends AppCompatActivity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                Intent intent = new Intent(getApplicationContext(), MainActivity.class);  // Intent 선언
-                startActivity(intent);   // Intent 시작
-                finish();
+                // 자동로그인 구현
+                if (PreferenceManager.getBoolean(LoadingActivity.this, "autoLogin")) {
+                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                    startActivity(intent);
+                    finish();
+                } else {
+                    Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                    startActivity(intent);
+                    finish();
+                }
             }
         }, 2000);  // 로딩화면 시간
     }

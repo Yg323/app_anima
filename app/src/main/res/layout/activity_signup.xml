@@ -43,7 +43,6 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="30dp"
             android:layout_marginTop="10dp"
-            android:layout_marginRight="30dp"
             android:background="@drawable/custom_edittext"
             android:fontFamily="@font/nanum_baren_yet"
             android:hint="이메일을 입력하세요"
@@ -51,9 +50,24 @@
             android:padding="5dp"
             android:textColor="@color/black"
             android:textSize="16dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginRight="10dp"
+            app:layout_constraintEnd_toStartOf="@+id/btn_validate"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tv_email" />
+
+        <Button
+            android:id="@+id/btn_validate"
+            android:layout_width="60dp"
+            android:layout_height="0dp"
+            android:background="@drawable/custom_edittext"
+            android:fontFamily="@font/recipekorea"
+            android:text="중복확인"
+            android:textColor="@color/black"
+            android:textSize="11dp"
+            android:layout_marginRight="30dp"
+            app:layout_constraintBottom_toBottomOf="@+id/et_email"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/et_email" />
 
         <TextView
             android:id="@+id/tv_pswd"
@@ -149,15 +163,15 @@
             app:layout_constraintTop_toBottomOf="@+id/tv_name" />
 
         <Button
-            android:id="@+id/btn_done"
+            android:id="@+id/btn_apply"
             android:layout_width="140dp"
             android:layout_height="30dp"
+            android:layout_marginTop="40dp"
             android:background="@drawable/custom_edittext"
             android:fontFamily="@font/recipekorea"
             android:text="완료"
             android:textColor="@color/black"
             android:textSize="16dp"
-            android:layout_marginTop="40dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/et_name" />

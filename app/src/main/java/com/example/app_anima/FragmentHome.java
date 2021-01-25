@@ -2,6 +2,7 @@ package com.example.app_anima;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -181,7 +182,7 @@ public class FragmentHome extends Fragment {
 
 
         //drawer 리스트 뷰
-        final String[] items = {"블루투스 연결"};
+        final String[] items = {"블루투스 연결", "로그아웃"};
         ArrayAdapter adapter = new ArrayAdapter(getContext(), android.R.layout.simple_list_item_1, items);
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(new ListView.OnItemClickListener() {
@@ -190,8 +191,12 @@ public class FragmentHome extends Fragment {
             public void onItemClick(AdapterView parent, View v, int position, long id) {
                 switch (position) {
                     case 0:
-
                         break;
+                    case 1:
+                        PreferenceManager.clear(getContext());
+                        Intent intent = new Intent(getActivity(), LoginActivity.class);
+                        startActivity(intent);
+                        getActivity().finish();
                 }
                 // close drawer.
                 DrawerLayout drawer = viewGroup.findViewById(R.id.drawer);
