@@ -39,14 +39,13 @@ import androidx.viewpager.widget.ViewPager;
 import com.dinuscxj.progressbar.CircleProgressBar;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class FragmentHome extends Fragment {
 
-    private TextView tv_calorie, tv_menu, tv_water, tv_temp, tv_bpm, tv_go_jog, tv_run_step, tv_walk_step;
+    private TextView tv_calorie, tv_menu, tv_water, tv_temp, tv_bpm, tv_go_jog, tv_run_step, tv_walk_step, tv_rest_time;
     private ListView listView;
     private ScrollView scrollView;
 
@@ -69,8 +68,7 @@ public class FragmentHome extends Fragment {
     private Timer timer;
 
     private boolean load = false;
-    private int water_count, nWeek, tempCnt, walk_step, run_step;
-    private float tempSum = 0;
+    private int water_count, walk_step, run_step;
     private String txt_go_jog;
 
 
@@ -87,6 +85,7 @@ public class FragmentHome extends Fragment {
         tv_go_jog = viewGroup.findViewById(R.id.go_jog);
         tv_run_step = viewGroup.findViewById(R.id.tv_run_step);
         tv_walk_step = viewGroup.findViewById(R.id.tv_walk_step);
+        tv_rest_time = viewGroup.findViewById(R.id.tv_rest_time);
 
         listView = viewGroup.findViewById(R.id.drawer_menulist);
         scrollView = viewGroup.findViewById(R.id.sv_main);
@@ -112,52 +111,8 @@ public class FragmentHome extends Fragment {
         }
 
         /*Initial Setting*/
-        Calendar cal = Calendar.getInstance();
-        nWeek = cal.get(Calendar.DAY_OF_WEEK);
-        if (PreferenceManager.getInt(getContext(), "nweek") != nWeek) {
-            PreferenceManager.setInt(getContext(), "water_count", 0);
-            PreferenceManager.setInt(getContext(), "run_step", 0);
-            PreferenceManager.setInt(getContext(), "walk_step", 0);
-            PreferenceManager.setInt(getContext(), "nweek", nWeek);
-        }
-        water_count = PreferenceManager.getInt(getContext(), "water_count");
-        run_step = PreferenceManager.getInt(getContext(), "run_step");
-        walk_step = PreferenceManager.getInt(getContext(), "walk_step");
-        tv_water.setText(Integer.toString(water_count));
-        if ((run_step + walk_step) > 1) {
-            txt_go_jog = (run_step + walk_step) + "/"+ JOG_GOAL +"걸음";
-            tv_go_jog.setText(txt_go_jog);
-            circleProgressBar.setProgress((run_step + walk_step) * 100 / JOG_GOAL);
-        }
+        settingData();
 
-
-        // 걸음수에 따라서 오늘의 운동기록
-        if ((run_step + walk_step) > 1) {
-            dog_running_time.setVisibility(View.VISIBLE);
-            int sumStep = run_step + walk_step;
-            int run_percent = run_step / sumStep * 100;
-            int walk_percent = 100 - run_percent;
-            String run_text = run_percent + "%";
-            String walk_text = walk_percent + "%";
-            LinearLayout.LayoutParams param_run
-                    = (LinearLayout.LayoutParams) tv_run_step.getLayoutParams();
-            LinearLayout.LayoutParams param_walk
-                    = (LinearLayout.LayoutParams) tv_walk_step.getLayoutParams();
-            if (walk_percent > 30 && run_percent > 30) {
-                tv_run_step.setText(run_text);
-                tv_walk_step.setText(walk_text);
-            }else if (walk_percent < run_percent){
-                tv_run_step.setText(run_text);
-            }else{
-                tv_walk_step.setText(walk_text);
-            }
-            param_run.weight = run_percent;
-            param_walk.weight = walk_percent;
-            tv_run_step.setLayoutParams(param_run);
-            tv_walk_step.setLayoutParams(param_walk);
-        } else {
-            dog_running_time.setVisibility(View.GONE);
-        }
         circle_add.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -206,7 +161,6 @@ public class FragmentHome extends Fragment {
 
 
         //drawer
-
         btn_menu.setOnClickListener(new OnClickListener() {
             @SuppressLint("RtlHardcoded")
             @Override
@@ -402,6 +356,53 @@ public class FragmentHome extends Fragment {
         timer.cancel();
     }
 
+    public void settingData(){
+        String rest_time;
+        int h, m, s;
+        int rest_data = PreferenceManager.getInt(getContext(), "rest_time");
+        h = rest_data / 60 / 60;
+        m = (rest_data - 60 * h) / 60;
+        s = rest_data - (60 * 60 * h) - (60 * m);
+        rest_time = h + "시간" + m + "분" + s + "초";
+        System.out.println(rest_data+"  "+rest_time);
+
+        water_count = PreferenceManager.getInt(getContext(), "water_count");
+        run_step = PreferenceManager.getInt(getContext(), "run_step");
+        walk_step = PreferenceManager.getInt(getContext(), "walk_step");
+
+        tv_water.setText(Integer.toString(water_count));
+        tv_temp.setText(String.valueOf(PreferenceManager.getFloat(getContext(), "Temperature")));
+        tv_bpm.setText(PreferenceManager.getString(getContext(), "bpm"));
+        tv_rest_time.setText(rest_time);
+
+        if ((run_step + walk_step) > 1) {
+            txt_go_jog = (run_step + walk_step) + "/"+ JOG_GOAL +"걸음";
+            tv_go_jog.setText(txt_go_jog);
+            circleProgressBar.setProgress((run_step + walk_step) * 100 / JOG_GOAL);
+            dog_running_time.setVisibility(View.VISIBLE);
+            int sumStep = run_step + walk_step;
+            int run_percent = run_step * 100 / sumStep;
+            int walk_percent = 100 - run_percent;
+            String run_text = run_percent + "%";
+            String walk_text = walk_percent + "%";
+            LinearLayout.LayoutParams param_run = (LinearLayout.LayoutParams) tv_run_step.getLayoutParams();
+            LinearLayout.LayoutParams param_walk = (LinearLayout.LayoutParams) tv_walk_step.getLayoutParams();
+            if (walk_percent > 30 && run_percent > 30) {
+                tv_run_step.setText(run_text);
+                tv_walk_step.setText(walk_text);
+            }else if (walk_percent < run_percent){
+                tv_run_step.setText(run_text);
+            }else{
+                tv_walk_step.setText(walk_text);
+            }
+            param_run.weight = run_percent;
+            param_walk.weight = walk_percent;
+            tv_run_step.setLayoutParams(param_run);
+            tv_walk_step.setLayoutParams(param_walk);
+        }else {
+            dog_running_time.setVisibility(View.GONE);
+        }
 
 
+    }
 }
