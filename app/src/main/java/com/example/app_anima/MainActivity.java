@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -26,9 +27,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -67,17 +66,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        FragmentTransaction transaction = fragmentManager.beginTransaction();
-        transaction.replace(R.id.frameLayout, fragmentHome).commitAllowingStateLoss();
-        BottomNavigationView bottomNavigationView = findViewById(R.id.navigationView);
-        bottomNavigationView.setOnNavigationItemSelectedListener(new ItemSelectedListener());
-
-
+    protected void onStart() {
+        super.onStart();
         // 블루투스 활성화하기
-
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // 블루투스 어댑터를 디폴트 어댑터로 설정
         if (bluetoothAdapter == null) { // 디바이스가 블루투스를 지원하지 않을 때
             System.out.println("해당 기기에서 지원하지 않습니다. ");
@@ -91,6 +82,17 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(intent, REQUEST_ENABLE_BT);
             }
         }
+    }
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+        transaction.replace(R.id.frameLayout, fragmentHome).commitAllowingStateLoss();
+        BottomNavigationView bottomNavigationView = findViewById(R.id.navigationView);
+        bottomNavigationView.setOnNavigationItemSelectedListener(new ItemSelectedListener());
 
         Calendar cal = Calendar.getInstance();
         int nWeek = cal.get(Calendar.DAY_OF_WEEK);
@@ -117,36 +119,11 @@ public class MainActivity extends AppCompatActivity {
         // 페어링 되어있는 장치가 없는 경우
         if (pariedDeviceCount == 0) {
             // 페어링을 하기위한 함수 호출
-            System.out.println("페어링 할 기기가 필요합니다.");
+            setBluetooth("기기를 먼저 연결해주세요.");
         }
         // 페어링 되어있는 장치가 있는 경우
         else {
-            // 디바이스를 선택하기 위한 다이얼로그 생성
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("페어링 되어있는 블루투스 디바이스 목록");
-            // 페어링 된 각각의 디바이스의 이름과 주소를 저장
-            List<String> list = new ArrayList<>();
-            // 모든 디바이스의 이름을 리스트에 추가
-            for (BluetoothDevice bluetoothDevice : devices) {
-                list.add(bluetoothDevice.getName());
-            }
-            list.add("취소");
-            // List를 CharSequence 배열로 변경
-            final CharSequence[] charSequences = list.toArray(new CharSequence[list.size()]);
-            list.toArray(new CharSequence[list.size()]);
-            // 해당 아이템을 눌렀을 때 호출 되는 이벤트 리스너
-            builder.setItems(charSequences, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    // 해당 디바이스와 연결하는 함수 호출
-                    connectDevice(charSequences[which].toString());
-                }
-            });
-            // 뒤로가기 버튼 누를 때 창이 안닫히도록 설정
-            builder.setCancelable(false);
-            // 다이얼로그 생성
-            AlertDialog alertDialog = builder.create();
-            alertDialog.show();
+            connectDevice("BT04-A");
         }
     }
 
@@ -169,6 +146,7 @@ public class MainActivity extends AppCompatActivity {
             inputStream = bluetoothSocket.getInputStream();
             // 데이터 수신 함수 호출
             receiveData();
+            Toast.makeText(getApplicationContext(), "기기가 연결되었습니다.", Toast.LENGTH_LONG).show();
         } catch (IOException e) {
             Toast.makeText(getApplicationContext(), "블루투스 연결 중 오류가 발생했습니다.", Toast.LENGTH_LONG).show();
             finish();  // App 종료
@@ -252,6 +230,27 @@ public class MainActivity extends AppCompatActivity {
         workerThread.start();
     }
 
+    public void setBluetooth(String bluetoothMessage) {
+        // 디바이스를 선택하기 위한 다이얼로그 생성
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(bluetoothMessage)        // 제목 설정
+                .setCancelable(false)        // 뒤로 버튼 클릭시 취소 가능 설정
+                .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                    // 확인 버튼 클릭시 설정
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        Intent intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
+                        startActivityForResult(intent, 0);
+                    }
+                })
+                .setNegativeButton("앱 종료", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        finish();
+                    }
+                });
+        AlertDialog dialog = builder.create();    // 알림창 객체 생성
+        dialog.show();    // 알림창 띄우기
+    }
+
     public void setTemperature(String data) {
         String[] temp = data.split("��C");
         tempSum += Float.parseFloat(temp[0]);
@@ -298,8 +297,7 @@ public class MainActivity extends AppCompatActivity {
             if (Float.parseFloat(s) < 7) {
                 if (Float.parseFloat(s) < 0) minus++;
                 stepCnt++;
-            }
-            else plus++;
+            } else plus++;
             if (Float.parseFloat(s) < 3) { // 뛰기
                 System.out.println("뛴다");
                 isRunning = true;
@@ -309,7 +307,7 @@ public class MainActivity extends AppCompatActivity {
         if (minus < 8) {
             if (isRunning) {
                 run_step += stepCnt;
-                System.out.println("run_step "+run_step);
+                System.out.println("run_step " + run_step);
                 PreferenceManager.setInt(this, "run_step", run_step);
             } else {
                 walk_step += stepCnt;

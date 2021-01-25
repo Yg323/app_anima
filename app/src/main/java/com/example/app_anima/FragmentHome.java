@@ -359,7 +359,7 @@ public class FragmentHome extends Fragment {
     public void settingData(){
         String rest_time;
         int h, m, s;
-        int rest_data = PreferenceManager.getInt(getContext(), "rest_time");
+        int rest_data = PreferenceManager.getInt(getActivity(), "rest_time");
         h = rest_data / 60 / 60;
         m = (rest_data - 60 * h) / 60;
         s = rest_data - (60 * 60 * h) - (60 * m);
