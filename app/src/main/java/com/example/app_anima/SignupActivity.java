@@ -143,7 +143,7 @@ public class SignupActivity extends AppCompatActivity {
         @Override
         public void onResponse(String response) {
             try {
-                Log.d("SignUp Result = ", response);
+                Log.d("SignUp Result", response);
                 boolean success = Boolean.parseBoolean(response);
 
                 if (success) {
@@ -160,7 +160,7 @@ public class SignupActivity extends AppCompatActivity {
             } catch (Exception e) {
                 e.printStackTrace();
                 AlertDialog builder = new AlertDialog.Builder(SignupActivity.this)
-                        .setMessage("404 BAD REQUEST")
+                        .setMessage("ERROR!")
                         .setPositiveButton("확인", null)
                         .show();
             }
@@ -171,10 +171,14 @@ public class SignupActivity extends AppCompatActivity {
         @Override
         public void onResponse(String response) {
             try {
-                Log.d("Validate Result = ", response);
+                Log.d("Validate Result", response);
                 boolean success = Boolean.parseBoolean(response);
 
                 if (success) {
+                    AlertDialog builder = new AlertDialog.Builder(SignupActivity.this)
+                            .setMessage("사용가능한 이메일 입니다.")
+                            .setPositiveButton("확인", null)
+                            .show();
                     isValidated = true;
                     btnValidate.setText("완료");
                     editTextEmail.setEnabled(false);
@@ -188,7 +192,7 @@ public class SignupActivity extends AppCompatActivity {
             } catch (Exception e) {
                 e.printStackTrace();
                 AlertDialog builder = new AlertDialog.Builder(SignupActivity.this)
-                        .setMessage("404 BAD REQUEST")
+                        .setMessage("ERROR!")
                         .setPositiveButton("확인", null)
                         .show();
             }
@@ -197,14 +201,13 @@ public class SignupActivity extends AppCompatActivity {
 }
 
 class SignupRequest extends StringRequest {
-    private final static String USER_API_URL = "http://167.179.103.235/usercrud.php";
+    private final static String USER_API_URL = "http://167.179.103.235/signup.php";
     private Map<String, String> map;
 
     public SignupRequest(String email, String password, String name, Response.Listener<String> listener) {
         super(Method.POST, USER_API_URL, listener, null);
 
         map = new HashMap<>();
-        map.put("crud", "create");
         map.put("email", email);
         map.put("pswd", password);
         map.put("name", name);

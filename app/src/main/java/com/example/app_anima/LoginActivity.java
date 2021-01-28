@@ -92,8 +92,8 @@ public class LoginActivity extends AppCompatActivity {
         public void onResponse(String response) {
             try {
                 JSONObject jsonObject = new JSONObject(response);
-                Log.d("Login Result = ", response);
-                boolean success = jsonObject.getBoolean("login_status");
+                Log.d("Login Result", response);
+                boolean success = jsonObject.getBoolean("success");
 
                 if (success) {
                     String userEmail = jsonObject.getString("email");
@@ -127,14 +127,13 @@ public class LoginActivity extends AppCompatActivity {
 }
 
 class LoginRequest extends StringRequest {
-    private final static String USER_API_URL = "http://167.179.103.235/usercrud.php";
+    private final static String USER_API_URL = "http://167.179.103.235/login.php";
     private Map<String, String> map;
 
     public LoginRequest(String email, String password, Response.Listener<String> listener) {
         super(Method.POST, USER_API_URL, listener, null);
 
         map = new HashMap<>();
-        map.put("crud", "read");
         map.put("email", email);
         map.put("pswd", password);
     }
