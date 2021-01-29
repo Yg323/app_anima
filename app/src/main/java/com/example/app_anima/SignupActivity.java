@@ -114,22 +114,19 @@ public class SignupActivity extends AppCompatActivity {
                     .setPositiveButton("확인", null)
                     .show();
             return false;
-        }
-        if (password.equals("")) {
+        } else if (password.equals("")) {
             AlertDialog builder = new AlertDialog.Builder(SignupActivity.this)
                     .setMessage("비밀번호를 입력하세요!")
                     .setPositiveButton("확인", null)
                     .show();
             return false;
-        }
-        if (passwordCheck.equals("")) {
+        } else if (passwordCheck.equals("")) {
             AlertDialog builder = new AlertDialog.Builder(SignupActivity.this)
                     .setMessage("비밀번호 확인을 입력하세요!")
                     .setPositiveButton("확인", null)
                     .show();
             return false;
-        }
-        if (name.equals("")) {
+        } else if (name.equals("")) {
             AlertDialog builder = new AlertDialog.Builder(SignupActivity.this)
                     .setMessage("이름을 입력하세요!")
                     .setPositiveButton("확인", null)
@@ -201,11 +198,11 @@ public class SignupActivity extends AppCompatActivity {
 }
 
 class SignupRequest extends StringRequest {
-    private final static String USER_API_URL = "http://167.179.103.235/signup.php";
+    private final static String URL = "http://167.179.103.235/signup.php";
     private Map<String, String> map;
 
     public SignupRequest(String email, String password, String name, Response.Listener<String> listener) {
-        super(Method.POST, USER_API_URL, listener, null);
+        super(Method.POST, URL, listener, null);
 
         map = new HashMap<>();
         map.put("email", email);

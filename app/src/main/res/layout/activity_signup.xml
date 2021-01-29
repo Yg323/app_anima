@@ -122,7 +122,7 @@
             android:layout_marginRight="30dp"
             android:background="@drawable/custom_edittext"
             android:fontFamily="@font/nanum_baren_yet"
-            android:hint="비밀번호를 다시 입력하세요"
+            android:hint="비밀번호를 한 번 더 입력하세요"
             android:inputType="textPassword"
             android:padding="5dp"
             android:textColor="@color/black"

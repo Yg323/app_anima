@@ -65,7 +65,8 @@ public class LoginActivity extends AppCompatActivity {
         btnFindPassword.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                Intent intent = new Intent(LoginActivity.this, FindPasswordActivity.class);
+                startActivity(intent);
             }
         });
     }
@@ -127,11 +128,11 @@ public class LoginActivity extends AppCompatActivity {
 }
 
 class LoginRequest extends StringRequest {
-    private final static String USER_API_URL = "http://167.179.103.235/login.php";
+    private final static String URL = "http://167.179.103.235/login.php";
     private Map<String, String> map;
 
     public LoginRequest(String email, String password, Response.Listener<String> listener) {
-        super(Method.POST, USER_API_URL, listener, null);
+        super(Method.POST, URL, listener, null);
 
         map = new HashMap<>();
         map.put("email", email);
