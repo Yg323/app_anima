@@ -154,7 +154,6 @@
                                         android:background="#FED943"
                                         android:fontFamily="@font/recipekorea"
                                         android:gravity="center"
-                                        android:text="50%"
                                         android:textColor="@color/white" />
                                     <TextView
                                         android:id="@+id/tv_run_step"
@@ -166,7 +165,6 @@
                                         android:background="#F92814"
                                         android:fontFamily="@font/recipekorea"
                                         android:gravity="center"
-                                        android:text="50%"
                                         android:textColor="@color/white" />
 
                                     <ImageView
