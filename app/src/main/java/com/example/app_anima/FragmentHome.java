@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -359,9 +360,9 @@ public class FragmentHome extends Fragment {
         String rest_time;
         int h, m, s;
         int rest_data = PreferenceManager.getInt(getActivity(), "rest_time");
-        h = rest_data / 60 / 60;
-        m = (rest_data - 60 * h) / 60;
-        s = rest_data - (60 * 60 * h) - (60 * m);
+        h = rest_data / 3600;
+        m = (rest_data % 3600) / 60;
+        s = (rest_data % 3600) % 60;
         rest_time = h + "시간" + m + "분" + s + "초";
 
         water_count = PreferenceManager.getInt(getContext(), "water_count");

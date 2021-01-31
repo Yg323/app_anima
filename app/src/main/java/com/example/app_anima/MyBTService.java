@@ -45,6 +45,7 @@ public class MyBTService extends Service {
 
     private final String SERVICE_ID = "기기와 통신";
     private final String DOG_LEG_ID = "반려견 상태";
+    private final String DEVICE_NAME = "BT04-A";
 
     @Override
     public void onCreate() {
@@ -53,7 +54,7 @@ public class MyBTService extends Service {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         devices = bluetoothAdapter.getBondedDevices();
         dbHelper = new DBHelper(this);
-        connectDevice("BT04-A");
+        connectDevice(DEVICE_NAME);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -119,7 +120,7 @@ public class MyBTService extends Service {
                         }
                         boolean isConnected = false;
                         for (BluetoothDevice tempDevice : devices) {
-                            if (tempDevice.getName().equals("BT04-A")) {
+                            if (tempDevice.getName().equals(DEVICE_NAME)) {
                                 isConnected = true;
                                 break;
                             }

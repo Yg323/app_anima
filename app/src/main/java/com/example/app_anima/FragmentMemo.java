@@ -1,5 +1,8 @@
 package com.example.app_anima;
 
+import android.annotation.SuppressLint;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,14 +26,25 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 public class FragmentMemo extends Fragment {
     ViewGroup viewGroup;
+
+    private DBHelper dbHelper;
+    private SQLiteDatabase db;
+
+    private Calendar cal;
     private BarChart runChart, waterChart;
     private LineChart lineChart;
     private final String[] timeLabelList = new String[]{"AM12", "AM1", "AM2", "AM3", "AM4", "AM5", "AM6", "AM7", "AM8", "AM9", "AM10", "AM11",
             "PM12", "PM1", "PM2", "PM3", "PM4", "PM5", "PM6", "PM7", "PM8", "PM9", "PM10", "PM11", "AM12"};
+
+    private int[] stepSums = new int[24];
+    private float[] tempValues = new float[24];
+    private int hour;
 
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -39,6 +53,13 @@ public class FragmentMemo extends Fragment {
         runChart = viewGroup.findViewById(R.id.barChart);
         waterChart = viewGroup.findViewById(R.id.barChartWater);
         lineChart = viewGroup.findViewById(R.id.lineChart);
+
+        cal = Calendar.getInstance();
+        hour = cal.get(Calendar.HOUR);
+        dbHelper = new DBHelper(getContext());
+        processingStep();
+        processingTemp();
+
         drawRunChart();
         drawWaterChart();
         drawLineChart();
@@ -46,12 +67,69 @@ public class FragmentMemo extends Fragment {
         return viewGroup;
     }
 
+    public void processingStep(){
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        String date = format.format(Calendar.getInstance().getTime());
+
+        dbHelper = new DBHelper(getContext());
+        db = dbHelper.getReadableDatabase();
+
+        for (int i = 0; i < hour + 1; i++) {
+            String newDate;
+            int stepSum = 0;
+
+            if(i<10) newDate = date + " 0" + i;
+            else newDate = date + " " + i;
+
+            Cursor cursor = db.rawQuery("SELECT stepcnt FROM steptable WHERE writedate LIKE '"+newDate+"%'", null);
+            while (cursor.moveToNext()){
+                int stepCnt = cursor.getInt(0);
+                stepSum += stepCnt;
+            }
+            stepSums[i] = stepSum;
+        }
+
+        db.close();
+
+    }
+
+    public void processingTemp(){
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        String date = format.format(Calendar.getInstance().getTime());
+
+        dbHelper = new DBHelper(getContext());
+        db = dbHelper.getReadableDatabase();
+
+        for (int i = 0; i <= hour + 1; i++) {
+            String newDate;
+            int cnt = 0;
+            float tempSum = (float) 0.00;
+            if(i<10) newDate = date + " 0" + i;
+            else newDate = date + " " + i;
+
+            Cursor cursor = db.rawQuery("SELECT tempvalue FROM temptable WHERE writedate LIKE '"+newDate+"%'", null);
+            while (cursor.moveToNext()){
+                float tempValue = cursor.getFloat(0);
+                cnt++;
+                tempSum += tempValue;
+            }
+            if(cnt == 0){
+                tempValues[i] = (float) 27.0;
+            }else{
+                tempValues[i] = (float) tempSum / cnt;
+            }
+
+        }
+        db.close();
+
+    }
+
     public void drawRunChart() {
         //막대그래프
-        int[] runValue = {1000, 5008, 9000, 5000, 3000, 2000, 1000, 5008, 9000, 5000, 3000, 2000, 1000, 5008, 9000, 5000, 3000, 2000, 1000, 5008, 9000, 5000, 3000, 2000, 1000};
+
         ArrayList<BarEntry> entries = new ArrayList<>();
 
-        for (int i = 0; i < runValue.length; i++) entries.add(new BarEntry(i, runValue[i]));
+        for (int i = 0; i <= hour; i++) entries.add(new BarEntry(i, stepSums[i]));
 
         BarDataSet barDataSet = new BarDataSet(entries, "");
         barDataSet.setColors(Color.parseColor("#86E57F"));
@@ -76,7 +154,7 @@ public class FragmentMemo extends Fragment {
 
         runChart.setHighlightPerTapEnabled(false); //하이라이트 없애기
         runChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(timeLabelList)); //라벨 설정
-        runChart.getXAxis().setGranularity(12f); //라벨 표시 설정!! 6씩 표현
+        runChart.getXAxis().setGranularity(1f); //라벨 표시 설정!! 6씩 표현
         runChart.setVisibleXRangeMaximum(25); //x축 표시 범위
 
         runChart.getLegend().setEnabled(false); //차트 범례 설정
@@ -87,8 +165,8 @@ public class FragmentMemo extends Fragment {
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void drawLineChart() {
         ArrayList<Entry> entries = new ArrayList<>();
-        float[] tempValue = {25.0f, 26.0f, 27.0f, 26.3f, 25.1f, 25.6f, 25.0f, 25.8f, 27.0f, 27.2f, 28.0f, 23.0f, 23.5f, 25.0f, 25.1f, 25.2f, 25.3f, 25.4f, 25.5f, 25.6f, 25.7f, 25.0f, 25.0f, 25.0f, 25.0f};
-        for (int i = 0; i < tempValue.length; i++) entries.add(new BarEntry(i, tempValue[i]));
+
+        for (int i = 0; i <= hour ; i++) entries.add(new BarEntry(i, tempValues[i]));
         LineDataSet lineDataSet = new LineDataSet(entries, "label");
         lineDataSet.setColor(Color.RED); //스타일 지정
         lineDataSet.setValueTextColor(Color.BLUE); //스타일 지정
@@ -100,7 +178,7 @@ public class FragmentMemo extends Fragment {
         lineChart.getXAxis().setDrawGridLines(false); //격자 선을 그릴수 있는지
         lineChart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM); //x축을 아래에 두기
         lineChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(timeLabelList)); //라벨 설정
-        lineChart.getXAxis().setGranularity(6f); //라벨 표시 설정!!!!! 이거 수정수정수정
+        lineChart.getXAxis().setGranularity(1f); //라벨 표시 설정!!!!! 이거 수정수정수정
         lineChart.getAxisLeft().setDrawAxisLine(false); //축과 나란한 선을 그리는지
         lineChart.getAxisLeft().setDrawGridLines(false); //격자 선을 그릴수 있는지
         lineChart.getAxisLeft().setDrawLabels(false); //축의 레이블을 그릴수 있는지
