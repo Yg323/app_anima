@@ -356,7 +356,7 @@ public class FragmentHome extends Fragment {
         timer.cancel();
     }
 
-    public void settingData(){
+    public void settingData() {
         String rest_time;
         int h, m, s;
         int rest_data = PreferenceManager.getInt(getActivity(), "rest_time");
@@ -364,7 +364,6 @@ public class FragmentHome extends Fragment {
         m = (rest_data - 60 * h) / 60;
         s = rest_data - (60 * 60 * h) - (60 * m);
         rest_time = h + "시간" + m + "분" + s + "초";
-        System.out.println(rest_data+"  "+rest_time);
 
         water_count = PreferenceManager.getInt(getContext(), "water_count");
         run_step = PreferenceManager.getInt(getContext(), "run_step");
@@ -376,7 +375,7 @@ public class FragmentHome extends Fragment {
         tv_rest_time.setText(rest_time);
 
         if ((run_step + walk_step) > 1) {
-            txt_go_jog = (run_step + walk_step) + "/"+ JOG_GOAL +"걸음";
+            txt_go_jog = (run_step + walk_step) + "/" + JOG_GOAL + "걸음";
             tv_go_jog.setText(txt_go_jog);
             circleProgressBar.setProgress((run_step + walk_step) * 100 / JOG_GOAL);
             dog_running_time.setVisibility(View.VISIBLE);
@@ -387,19 +386,21 @@ public class FragmentHome extends Fragment {
             String walk_text = walk_percent + "%";
             LinearLayout.LayoutParams param_run = (LinearLayout.LayoutParams) tv_run_step.getLayoutParams();
             LinearLayout.LayoutParams param_walk = (LinearLayout.LayoutParams) tv_walk_step.getLayoutParams();
-            if (walk_percent > 30 && run_percent > 30) {
+            if (walk_percent > 25 && run_percent > 25) {
                 tv_run_step.setText(run_text);
                 tv_walk_step.setText(walk_text);
-            }else if (walk_percent < run_percent){
+            } else if (walk_percent < run_percent) {
                 tv_run_step.setText(run_text);
-            }else{
+                tv_walk_step.setText(" ");
+            } else {
+                tv_run_step.setText(" ");
                 tv_walk_step.setText(walk_text);
             }
             param_run.weight = run_percent;
             param_walk.weight = walk_percent;
             tv_run_step.setLayoutParams(param_run);
             tv_walk_step.setLayoutParams(param_walk);
-        }else {
+        } else {
             dog_running_time.setVisibility(View.GONE);
         }
 

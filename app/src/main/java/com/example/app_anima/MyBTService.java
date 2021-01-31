@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
@@ -25,6 +26,10 @@ import java.util.Set;
 import java.util.UUID;
 
 public class MyBTService extends Service {
+
+    private DBHelper dbHelper;
+    private SQLiteDatabase db;
+
     private BluetoothAdapter bluetoothAdapter; // 블루투스 어댑터
     private Set<BluetoothDevice> devices; // 블루투스 디바이스 데이터 셋
     private BluetoothDevice bluetoothDevice = null; // 블루투스 디바이스
@@ -36,6 +41,7 @@ public class MyBTService extends Service {
 
     private int tempCnt, run_step, walk_step, rest_time;
     private float tempSum;
+    boolean thread_running = true;
 
     @Override
     public void onCreate() {
@@ -43,6 +49,7 @@ public class MyBTService extends Service {
         super.onCreate();
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         devices = bluetoothAdapter.getBondedDevices();
+        dbHelper = new DBHelper(this);
         connectDevice("BT04-A");
     }
 
@@ -96,18 +103,17 @@ public class MyBTService extends Service {
         // 데이터를 수신하기 위한 버퍼를 생성
         readBufferPosition = 0;
         readBuffer = new byte[1024];
-
         // 데이터를 수신하기 위한 쓰레드 생성
         workerThread = new Thread(new Runnable() {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void run() {
-                while(true) {
+                while (!workerThread.isInterrupted() && thread_running) {
                     try {
                         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
                         devices = bluetoothAdapter.getBondedDevices();
                         if (!bluetoothAdapter.isEnabled()) {
-                            workerThread.interrupt();
+                            thread_running = false;
                             stopSelf();
                         }
                         boolean isConnected = false;
@@ -118,7 +124,7 @@ public class MyBTService extends Service {
                             }
                         }
                         if (!isConnected) {
-                            workerThread.interrupt();
+                            thread_running = false;
                             stopSelf();
                         }
                         // 데이터 수신 확인
@@ -167,11 +173,11 @@ public class MyBTService extends Service {
                                 }
                             }
                             Intent updateIntent = new Intent("service");
-                            //updateIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             sendBroadcast(updateIntent);
                         }
                         try {
                             Thread.sleep(1000);
+                            if (!thread_running) workerThread.interrupt();
                         } catch (InterruptedException e) {
                             Log.d("스레드 종료", "인터럽트 발생");
                             e.printStackTrace();
@@ -191,7 +197,14 @@ public class MyBTService extends Service {
         tempCnt++;
         if (tempCnt == 5) {
             System.out.println("tempCnt" + tempCnt);
-            PreferenceManager.setFloat(this, "Temperature", (float) (Math.round((tempSum) * 20) / 100.0));
+            float new_temp = (float) (Math.round((tempSum) * 20) / 100.0);
+            PreferenceManager.setFloat(this, "Temperature", new_temp);
+            if (new_temp != 0) {
+                db = dbHelper.getReadableDatabase();
+                db.execSQL("INSERT INTO temptable('tempvalue') VALUES ('" + new_temp + "');");
+                db.close();
+            }
+
             tempSum = 0;
             tempCnt = 0;
         }
@@ -237,7 +250,6 @@ public class MyBTService extends Service {
                 isRunning = true;
             }
         }
-        System.out.println(minus);
         if (minus < 8) {
             if (isRunning) {
                 run_step += stepCnt;
@@ -247,6 +259,12 @@ public class MyBTService extends Service {
                 walk_step += stepCnt;
                 PreferenceManager.setInt(this, "walk_step", walk_step);
             }
+            if (stepCnt != 0) {
+                db = dbHelper.getReadableDatabase();
+                db.execSQL("INSERT INTO steptable('stepcnt') VALUES ('" + stepCnt + "');");
+                db.close();
+            }
+
         }
         if (plus == 10) {
             rest_time += 1;
@@ -268,9 +286,11 @@ public class MyBTService extends Service {
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel serviceChannel = new NotificationChannel("Foreground Service Channel", "Foreground Service Channel", NotificationManager.IMPORTANCE_DEFAULT );
+            NotificationChannel serviceChannel = new NotificationChannel("Foreground Service Channel", "Foreground Service Channel", NotificationManager.IMPORTANCE_DEFAULT);
             NotificationManager manager = getSystemService(NotificationManager.class);
             assert manager != null;
-            manager.createNotificationChannel(serviceChannel); }
+            manager.createNotificationChannel(serviceChannel);
+        }
     }
 }
+

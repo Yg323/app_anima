@@ -1,6 +1,5 @@
 package com.example.app_anima;
 
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,7 +14,6 @@ import androidx.fragment.app.Fragment;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.IMarker;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
@@ -24,21 +22,20 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
-import com.github.mikephil.charting.highlight.Highlight;
-import com.github.mikephil.charting.utils.MPPointF;
 
 import java.util.ArrayList;
 
 public class FragmentMemo extends Fragment {
-    ViewGroup viewGroup ;
+    ViewGroup viewGroup;
     private BarChart runChart, waterChart;
     private LineChart lineChart;
     private final String[] timeLabelList = new String[]{"AM12", "AM1", "AM2", "AM3", "AM4", "AM5", "AM6", "AM7", "AM8", "AM9", "AM10", "AM11",
-            "PM12", "PM1","PM2","PM3","PM4","PM5","PM6","PM7","PM8","PM9","PM10","PM11","AM12"};
+            "PM12", "PM1", "PM2", "PM3", "PM4", "PM5", "PM6", "PM7", "PM8", "PM9", "PM10", "PM11", "AM12"};
 
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        viewGroup =  (ViewGroup) inflater.inflate(R.layout.fragment_memo, container, false);
+        viewGroup = (ViewGroup) inflater.inflate(R.layout.fragment_memo, container, false);
         runChart = viewGroup.findViewById(R.id.barChart);
         waterChart = viewGroup.findViewById(R.id.barChartWater);
         lineChart = viewGroup.findViewById(R.id.lineChart);
@@ -48,14 +45,15 @@ public class FragmentMemo extends Fragment {
 
         return viewGroup;
     }
-    public void drawRunChart(){
+
+    public void drawRunChart() {
         //막대그래프
-        int[] runValue = {1000, 5008, 9000, 5000, 3000, 2000, 1000, 5008, 9000, 5000, 3000, 2000, 1000, 5008, 9000, 5000, 3000, 2000, 1000, 5008, 9000, 5000, 3000, 2000, 1000 };
+        int[] runValue = {1000, 5008, 9000, 5000, 3000, 2000, 1000, 5008, 9000, 5000, 3000, 2000, 1000, 5008, 9000, 5000, 3000, 2000, 1000, 5008, 9000, 5000, 3000, 2000, 1000};
         ArrayList<BarEntry> entries = new ArrayList<>();
 
-        for (int i = 0; i < runValue.length ; i++) entries.add(new BarEntry(i, runValue[i]));
+        for (int i = 0; i < runValue.length; i++) entries.add(new BarEntry(i, runValue[i]));
 
-        BarDataSet barDataSet = new BarDataSet(entries,"");
+        BarDataSet barDataSet = new BarDataSet(entries, "");
         barDataSet.setColors(Color.parseColor("#86E57F"));
 
         BarData barData = new BarData(barDataSet);
@@ -87,10 +85,10 @@ public class FragmentMemo extends Fragment {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public void drawLineChart(){
+    public void drawLineChart() {
         ArrayList<Entry> entries = new ArrayList<>();
-        float[] tempValue = {25.0f, 26.0f, 27.0f, 26.3f, 25.1f, 25.6f, 25.0f, 25.8f, 27.0f, 27.2f, 28.0f, 23.0f, 23.5f, 25.0f, 25.1f, 25.2f, 25.3f, 25.4f, 25.5f, 25.6f, 25.7f, 25.0f, 25.0f, 25.0f, 25.0f };
-        for (int i = 0; i < tempValue.length ; i++) entries.add(new BarEntry(i, tempValue[i]));
+        float[] tempValue = {25.0f, 26.0f, 27.0f, 26.3f, 25.1f, 25.6f, 25.0f, 25.8f, 27.0f, 27.2f, 28.0f, 23.0f, 23.5f, 25.0f, 25.1f, 25.2f, 25.3f, 25.4f, 25.5f, 25.6f, 25.7f, 25.0f, 25.0f, 25.0f, 25.0f};
+        for (int i = 0; i < tempValue.length; i++) entries.add(new BarEntry(i, tempValue[i]));
         LineDataSet lineDataSet = new LineDataSet(entries, "label");
         lineDataSet.setColor(Color.RED); //스타일 지정
         lineDataSet.setValueTextColor(Color.BLUE); //스타일 지정
@@ -119,19 +117,25 @@ public class FragmentMemo extends Fragment {
         lineChart.invalidate(); //refresh
     }
 
-    public void drawWaterChart(){
+    public void drawWaterChart() {
         ArrayList<BarEntry> entries = new ArrayList<>();
         final ArrayList<String> labelList = new ArrayList<>();
-        entries.add(new BarEntry(0,500));
-        entries.add(new BarEntry(1,100));
-        entries.add(new BarEntry(2,700));
-        entries.add(new BarEntry(3,300));
-        entries.add(new BarEntry(4,1000));
-        entries.add(new BarEntry(5,600));
-        entries.add(new BarEntry(6,2000));
-        labelList.add("월"); labelList.add("화"); labelList.add("수"); labelList.add("목"); labelList.add("금"); labelList.add("토"); labelList.add("일");
+        entries.add(new BarEntry(0, 500));
+        entries.add(new BarEntry(1, 100));
+        entries.add(new BarEntry(2, 700));
+        entries.add(new BarEntry(3, 300));
+        entries.add(new BarEntry(4, 1000));
+        entries.add(new BarEntry(5, 600));
+        entries.add(new BarEntry(6, 2000));
+        labelList.add("월");
+        labelList.add("화");
+        labelList.add("수");
+        labelList.add("목");
+        labelList.add("금");
+        labelList.add("토");
+        labelList.add("일");
 
-        BarDataSet barDataSet = new BarDataSet(entries," ");
+        BarDataSet barDataSet = new BarDataSet(entries, " ");
         barDataSet.setColors(Color.parseColor("#1070DE"));
 
         BarData barData = new BarData(barDataSet);
