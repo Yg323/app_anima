@@ -4,7 +4,6 @@ import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -12,11 +11,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,12 +24,8 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.Set;
-import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     private FragmentManager fragmentManager = getSupportFragmentManager();
@@ -77,6 +69,25 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView bottomNavigationView = findViewById(R.id.navigationView);
         bottomNavigationView.setOnNavigationItemSelectedListener(new ItemSelectedListener());
 
+        if (isServiceRunning(class_name)) {
+            this.registerReceiver(receiver, new IntentFilter("service"));
+        }
+
+        // 블루투스 활성화하기
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // 블루투스 어댑터를 디폴트 어댑터로 설정
+        if (bluetoothAdapter == null) { // 디바이스가 블루투스를 지원하지 않을 때
+            System.out.println("해당 기기에서 지원하지 않습니다. ");
+        } else { // 디바이스가 블루투스를 지원 할 때
+            if (bluetoothAdapter.isEnabled()) { // 블루투스가 활성화 상태 (기기에 블루투스가 켜져있음)
+                selectBluetoothDevice(); // 블루투스 디바이스 선택 함수 호출
+            } else { // 블루투스가 비 활성화 상태 (기기에 블루투스가 꺼져있음)
+                // 블루투스를 활성화 하기 위한 다이얼로그 출력
+                Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                // 선택한 값이 onActivityResult 함수에서 콜백된다.
+                startActivityForResult(intent, REQUEST_ENABLE_BT);
+            }
+        }
+
         Calendar cal = Calendar.getInstance();
         int nWeek = cal.get(Calendar.DAY_OF_WEEK);
         if (PreferenceManager.getInt(this, "nweek") != nWeek) {
@@ -92,24 +103,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        if (isServiceRunning(class_name)) {
-            this.registerReceiver(receiver, new IntentFilter("service"));
-        } else {
-            // 블루투스 활성화하기
-            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // 블루투스 어댑터를 디폴트 어댑터로 설정
-            if (bluetoothAdapter == null) { // 디바이스가 블루투스를 지원하지 않을 때
-                System.out.println("해당 기기에서 지원하지 않습니다. ");
-            } else { // 디바이스가 블루투스를 지원 할 때
-                if (bluetoothAdapter.isEnabled()) { // 블루투스가 활성화 상태 (기기에 블루투스가 켜져있음)
-                    selectBluetoothDevice(); // 블루투스 디바이스 선택 함수 호출
-                } else { // 블루투스가 비 활성화 상태 (기기에 블루투스가 꺼져있음)
-                    // 블루투스를 활성화 하기 위한 다이얼로그 출력
-                    Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                    // 선택한 값이 onActivityResult 함수에서 콜백된다.
-                    startActivityForResult(intent, REQUEST_ENABLE_BT);
-                }
-            }
-        }
+
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)

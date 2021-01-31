@@ -1,6 +1,5 @@
 package com.example.app_anima;
 
-import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -9,11 +8,7 @@ import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
@@ -67,7 +62,7 @@ public class MyBTService extends Service {
         run_step = PreferenceManager.getInt(this, "run_step");
         walk_step = PreferenceManager.getInt(this, "walk_step");
         rest_time = PreferenceManager.getInt(this, "rest_time");
-        workerThread.start();
+        receiveData();
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -89,7 +84,7 @@ public class MyBTService extends Service {
             // 데이터 송,수신 스트림을 얻어옵니다.
             inputStream = bluetoothSocket.getInputStream();
             // 데이터 수신 함수 호출
-            receiveData();
+            //receiveData();
             Toast.makeText(getApplicationContext(), "기기가 연결되었습니다.", Toast.LENGTH_LONG).show();
         } catch (IOException e) {
             Toast.makeText(getApplicationContext(), "블루투스 연결 중 오류가 발생했습니다.", Toast.LENGTH_LONG).show();
@@ -173,10 +168,15 @@ public class MyBTService extends Service {
                             //updateIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             sendBroadcast(updateIntent);
                         }
-                        Thread.sleep(1000);
-                    } catch (IOException | InterruptedException e) {
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    workerThread.start();
                 }
             }
         });
