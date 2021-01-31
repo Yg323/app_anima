@@ -137,7 +137,7 @@ public class FragmentHome extends Fragment {
 
 
         //drawer 리스트 뷰
-        final String[] items = {"블루투스 연결", "로그아웃"};
+        final String[] items = {"로그아웃"};
         ArrayAdapter adapter = new ArrayAdapter(getContext(), android.R.layout.simple_list_item_1, items);
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(new ListView.OnItemClickListener() {
@@ -146,12 +146,11 @@ public class FragmentHome extends Fragment {
             public void onItemClick(AdapterView parent, View v, int position, long id) {
                 switch (position) {
                     case 0:
-                        break;
-                    case 1:
                         PreferenceManager.clear(getContext());
                         Intent intent = new Intent(getActivity(), LoginActivity.class);
                         startActivity(intent);
                         getActivity().finish();
+
                 }
                 // close drawer.
                 DrawerLayout drawer = viewGroup.findViewById(R.id.drawer);

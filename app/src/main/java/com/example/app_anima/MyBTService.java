@@ -43,6 +43,9 @@ public class MyBTService extends Service {
     private float tempSum;
     boolean thread_running = true;
 
+    private final String SERVICE_ID = "기기와 통신";
+    private final String DOG_LEG_ID = "반려견 상태";
+
     @Override
     public void onCreate() {
         Log.d("서비스 온 크리에이트 호출", "호출");
@@ -60,9 +63,7 @@ public class MyBTService extends Service {
         createNotificationChannel();
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-        Notification notification = new NotificationCompat.Builder(this, "Foreground Service Channel")
-                .setContentTitle("Foreground Service")
-                .setContentText("test")
+        Notification notification = new NotificationCompat.Builder(this, SERVICE_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .build();
         startForeground(1, notification);
@@ -158,7 +159,7 @@ public class MyBTService extends Service {
                                             setTemperature(data[1]);
                                             break;
                                         case "A":
-                                            //setDogLiskDialog(data[1]);
+                                            setDogLiskDialog(data[1]);
                                             break;
                                         case "P":
                                             setHeartRate(data[1]);
@@ -210,27 +211,30 @@ public class MyBTService extends Service {
         }
     }
 
-    /*public void setDogLiskDialog(String data) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    public void setDogLiskDialog(String data) {
         String[] A = data.split(",");
         float a_x = Float.parseFloat(A[0]);
         float a_x1 = PreferenceManager.getFloat(this, "AX");
         if (a_x1 == 0.0) a_x1 = a_x;
         PreferenceManager.setFloat(this, "AX", a_x);
         if (Math.abs(a_x - a_x1) > 200) {
-            builder.setTitle("반려견의 상태를 확인해주세요!")        // 제목 설정
-                    .setMessage("다리를 확인해주세요! ")        // 메세지 설정
-                    .setCancelable(false)        // 뒤로 버튼 클릭시 취소 가능 설정
-                    .setPositiveButton("확인", new DialogInterface.OnClickListener() {
-                        // 확인 버튼 클릭시 설정
-                        public void onClick(DialogInterface dialog, int whichButton) {
-                            dialog.cancel();
-                        }
-                    });
-            AlertDialog dialog = builder.create();    // 알림창 객체 생성
-            dialog.show();    // 알림창 띄우기
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                NotificationChannel serviceChannel = new NotificationChannel(DOG_LEG_ID, DOG_LEG_ID, NotificationManager.IMPORTANCE_DEFAULT);
+                NotificationManager manager = getSystemService(NotificationManager.class);
+                assert manager != null;
+                manager.createNotificationChannel(serviceChannel);
+                Intent notificationIntent = new Intent(this, MainActivity.class);
+                PendingIntent pendingIntent = PendingIntent.getActivity(this, 100, notificationIntent, 0);
+                Notification notification = new NotificationCompat.Builder(this, DOG_LEG_ID)
+                        .setContentTitle("반려견의 상태를 확인해주세요.")
+                        .setContentText("다리를 확인해주세요.")
+                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .build();
+                manager.notify(9999, notification);
+            }
+
         }
-    }*/
+    }
 
     public void setHeartRate(String data) {
         PreferenceManager.setString(this, "bpm", data);
@@ -286,7 +290,7 @@ public class MyBTService extends Service {
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel serviceChannel = new NotificationChannel("Foreground Service Channel", "Foreground Service Channel", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationChannel serviceChannel = new NotificationChannel(SERVICE_ID, SERVICE_ID, NotificationManager.IMPORTANCE_DEFAULT);
             NotificationManager manager = getSystemService(NotificationManager.class);
             assert manager != null;
             manager.createNotificationChannel(serviceChannel);
