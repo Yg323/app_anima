@@ -46,10 +46,7 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case REQUEST_ENABLE_BT:
                 if (requestCode == RESULT_OK) { // '사용'을 눌렀을 때
-                    devices = bluetoothAdapter.getBondedDevices();
-                    // 페어링 된 디바이스의 크기를 저장
-                    int pariedDeviceCount = devices.size();
-                    // 페어링 되어있는 장치가 없는 경우
+                    selectBluetoothDevice();
                 } else { // '취소'를 눌렀을 때
                     // 여기에 처리 할 코드를 작성하세요.
                 }
@@ -69,10 +66,6 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView bottomNavigationView = findViewById(R.id.navigationView);
         bottomNavigationView.setOnNavigationItemSelectedListener(new ItemSelectedListener());
 
-        if (isServiceRunning(class_name)) {
-            this.registerReceiver(receiver, new IntentFilter("service"));
-        }
-
         // 블루투스 활성화하기
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // 블루투스 어댑터를 디폴트 어댑터로 설정
         if (bluetoothAdapter == null) { // 디바이스가 블루투스를 지원하지 않을 때
@@ -86,6 +79,10 @@ public class MainActivity extends AppCompatActivity {
                 // 선택한 값이 onActivityResult 함수에서 콜백된다.
                 startActivityForResult(intent, REQUEST_ENABLE_BT);
             }
+        }
+
+        if (isServiceRunning(class_name)) {
+            this.registerReceiver(receiver, new IntentFilter("service"));
         }
 
         Calendar cal = Calendar.getInstance();
@@ -103,7 +100,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -150,9 +146,10 @@ public class MainActivity extends AppCompatActivity {
         if (pariedDeviceCount == 0) {
             // 페어링을 하기위한 함수 호출
             setBluetooth("기기를 먼저 연결해주세요.");
+        } else {
+            Intent service = new Intent(MainActivity.this, MyBTService.class);
+            startForegroundService(service);
         }
-        Intent service = new Intent(MainActivity.this, MyBTService.class);
-        startForegroundService(service);
     }
 
     public void setBluetooth(String bluetoothMessage) {

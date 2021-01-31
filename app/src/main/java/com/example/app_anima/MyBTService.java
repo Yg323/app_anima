@@ -89,7 +89,6 @@ public class MyBTService extends Service {
         } catch (IOException e) {
             Toast.makeText(getApplicationContext(), "블루투스 연결 중 오류가 발생했습니다.", Toast.LENGTH_LONG).show();
             e.printStackTrace();
-            stopSelf();
         }
     }
 
@@ -103,11 +102,12 @@ public class MyBTService extends Service {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void run() {
-                while (!Thread.currentThread().isInterrupted()) {
+                while(true) {
                     try {
                         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
                         devices = bluetoothAdapter.getBondedDevices();
                         if (!bluetoothAdapter.isEnabled()) {
+                            workerThread.interrupt();
                             stopSelf();
                         }
                         boolean isConnected = false;
@@ -118,11 +118,13 @@ public class MyBTService extends Service {
                             }
                         }
                         if (!isConnected) {
+                            workerThread.interrupt();
                             stopSelf();
                         }
                         // 데이터 수신 확인
                         int byteAvailable = inputStream.available();
                         // 데이터가 수신 된 경우
+                        Log.d("통신", byteAvailable + "중");
                         if (byteAvailable > 0) {
                             // 입력 스트림에서 바이트 단위로 읽어오기
                             byte[] bytes = new byte[byteAvailable];
@@ -168,18 +170,19 @@ public class MyBTService extends Service {
                             //updateIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             sendBroadcast(updateIntent);
                         }
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            Log.d("스레드 종료", "인터럽트 발생");
+                            e.printStackTrace();
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    workerThread.start();
                 }
             }
         });
+        workerThread.start();
     }
 
     public void setTemperature(String data) {
