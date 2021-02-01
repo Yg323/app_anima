@@ -56,52 +56,32 @@
                     <TableRow>
 
                         <Button
+                            android:id="@+id/btn_day"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_margin="11dp"
                             android:layout_weight="1"
-                            android:background="@drawable/box_large"
+                            android:background="@drawable/box_regular"
                             android:fontFamily="@font/recipekorea"
                             android:padding="3dp"
                             android:text="일"
                             android:textColor="#565656"
-                            android:textSize="20dp"></Button>
+                            android:textSize="20dp"/>
 
                         <Button
+                            android:id="@+id/btn_week"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_margin="11dp"
                             android:layout_weight="1"
-                            android:background="@drawable/box_large"
+                            android:background="@drawable/box_regular"
                             android:fontFamily="@font/recipekorea"
                             android:padding="3dp"
                             android:text="주"
                             android:textColor="#565656"
-                            android:textSize="20dp"></Button>
+                            android:textSize="20dp"/>
 
-                        <Button
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_margin="11dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/box_large"
-                            android:fontFamily="@font/recipekorea"
-                            android:padding="3dp"
-                            android:text="월"
-                            android:textColor="#565656"
-                            android:textSize="20dp"></Button>
 
-                        <Button
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_margin="11dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/box_large"
-                            android:fontFamily="@font/recipekorea"
-                            android:padding="3dp"
-                            android:text="년"
-                            android:textColor="#565656"
-                            android:textSize="20dp"></Button>
                     </TableRow>
                 </TableLayout>
 

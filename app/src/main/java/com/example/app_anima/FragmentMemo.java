@@ -8,7 +8,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -36,6 +38,8 @@ public class FragmentMemo extends Fragment {
     private DBHelper dbHelper;
     private SQLiteDatabase db;
 
+    private Button btn_day, btn_week;
+
     private Calendar cal;
     private BarChart runChart, waterChart;
     private LineChart lineChart;
@@ -53,6 +57,8 @@ public class FragmentMemo extends Fragment {
         runChart = viewGroup.findViewById(R.id.barChart);
         waterChart = viewGroup.findViewById(R.id.barChartWater);
         lineChart = viewGroup.findViewById(R.id.lineChart);
+        btn_day = viewGroup.findViewById(R.id.btn_day);
+        btn_week = viewGroup.findViewById(R.id.btn_week);
 
         cal = Calendar.getInstance();
         hour = cal.get(Calendar.HOUR);
@@ -60,9 +66,23 @@ public class FragmentMemo extends Fragment {
         processingStep();
         processingTemp();
 
-        drawRunChart();
+        drawDayRunChart();
         drawWaterChart();
         drawLineChart();
+
+        btn_day.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                drawDayRunChart();
+            }
+        });
+
+        btn_week.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                drawWeekRunChart();
+            }
+        });
 
         return viewGroup;
     }
@@ -124,7 +144,45 @@ public class FragmentMemo extends Fragment {
 
     }
 
-    public void drawRunChart() {
+    public void drawDayRunChart() {
+        //막대그래프
+
+        ArrayList<BarEntry> entries = new ArrayList<>();
+
+        for (int i = 0; i <= hour; i++) entries.add(new BarEntry(i, stepSums[i]));
+
+        BarDataSet barDataSet = new BarDataSet(entries, "");
+        barDataSet.setColors(Color.parseColor("#86E57F"));
+
+        BarData barData = new BarData(barDataSet);
+        barData.setBarWidth((float) 0.5);//막대그래프 너비 설정
+
+        runChart.setData(barData);
+        runChart.setFitBars(true);
+
+        runChart.getDescription().setEnabled(false); //차트옆에 표기된 description 안보이게 설정
+        runChart.setPinchZoom(false); //줌인아웃 설정
+
+        runChart.setDrawGridBackground(false); //격자구조 여부
+        runChart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM); //x축을 아래에 두기
+        runChart.getAxisLeft().setDrawAxisLine(false); //축과 나란한 선을 그리는지
+        runChart.getAxisLeft().setDrawGridLines(false); //격자 선을 그릴수 있는지
+        runChart.getAxisLeft().setDrawLabels(false); //축의 레이블을 그릴수 있는지
+        runChart.getAxisRight().setDrawAxisLine(false); //축과 나란한 선을 그리는지
+        runChart.getAxisRight().setDrawGridLines(false); //격자 선을 그릴수 있는지
+        runChart.getAxisRight().setDrawLabels(false); //축의 레이블을 그릴수 있는지
+
+        runChart.setHighlightPerTapEnabled(false); //하이라이트 없애기
+        runChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(timeLabelList)); //라벨 설정
+        runChart.getXAxis().setGranularity(1f); //라벨 표시 설정!! 6씩 표현
+        runChart.setVisibleXRangeMaximum(25); //x축 표시 범위
+
+        runChart.getLegend().setEnabled(false); //차트 범례 설정
+
+        runChart.invalidate();
+    }
+
+    public void drawWeekRunChart() {
         //막대그래프
 
         ArrayList<BarEntry> entries = new ArrayList<>();

@@ -1,5 +1,6 @@
 package com.example.app_anima;
 
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -9,10 +10,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
@@ -23,9 +26,21 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
@@ -39,6 +54,10 @@ public class MainActivity extends AppCompatActivity {
     private Set<BluetoothDevice> devices; // 블루투스 디바이스 데이터 셋
 
     String class_name = MyBTService.class.getName();
+
+    private Calendar cal;
+    private DBHelper dbHelper;
+    private SQLiteDatabase db;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -64,8 +83,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // DB 생성
-        DBHelper dbHelper;
-        SQLiteDatabase db;
         dbHelper = new DBHelper(this);
         db = dbHelper.getWritableDatabase();
         dbHelper.onCreate(db);
@@ -94,14 +111,19 @@ public class MainActivity extends AppCompatActivity {
             this.registerReceiver(receiver, new IntentFilter("service"));
         }
 
-        Calendar cal = Calendar.getInstance();
-        int nWeek = cal.get(Calendar.DAY_OF_WEEK);
-        if (PreferenceManager.getInt(this, "nweek") != nWeek) {
+        cal = Calendar.getInstance();
+
+        /*다음날이 되었을 때*/
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        String date = format.format(Calendar.getInstance().getTime());
+        String yesterday = PreferenceManager.getString(this, "date");
+        if (!Objects.equals(yesterday, date)) {
+            sendServer(yesterday);
             PreferenceManager.setInt(this, "water_count", 0);
             PreferenceManager.setInt(this, "run_step", 0);
             PreferenceManager.setInt(this, "walk_step", 0);
             PreferenceManager.setInt(this, "rest_time", 0);
-            PreferenceManager.setInt(this, "nweek", nWeek);
+            PreferenceManager.setString(this, "date", date);
         }
     }
 
@@ -170,7 +192,60 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();    // 알림창 띄우기
     }
 
+    public void sendServer(String yesterday){
+        db = dbHelper.getReadableDatabase();
+        int waterCnt = 0, stepCnt = 0, tempCnt = 0;
+        float tempValue = 0.00f;
+        String email = PreferenceManager.getString(this, "userEmail");
+
+        Cursor cursor = db.rawQuery("SELECT stepcnt FROM steptable WHERE writedate LIKE '"+yesterday+"%'", null);
+        while (cursor.moveToNext()){
+            int step = cursor.getInt(0);
+            stepCnt += step;
+        }
+        cursor = db.rawQuery("SELECT tempvalue FROM temptable WHERE writedate LIKE '"+yesterday+"%'", null);
+        while (cursor.moveToNext()){
+            float temp = cursor.getFloat(0);
+            tempCnt++;
+            tempValue += temp;
+        }
+        db.close();
+
+        tempValue = tempValue / tempCnt;
+        waterCnt = PreferenceManager.getInt(this, "water_count");
+        DataRequest dataRequest = new DataRequest(yesterday, waterCnt, stepCnt, tempValue, email, responseListener);
+        RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
+        queue.add(dataRequest);
+    }
+
+
+
+    Response.Listener<String> responseListener = new Response.Listener<String>() {
+        @Override
+        public void onResponse(String response) {
+            try {
+                JSONObject jsonObject = new JSONObject(response);
+                Log.d("Data Result", response);
+                boolean success = jsonObject.getBoolean("success");
+
+                if (success) {
+                    Log.d("서버 전송","성공");
+
+                } else {
+                    Log.d("서버 전송","실패");
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                androidx.appcompat.app.AlertDialog builder = new androidx.appcompat.app.AlertDialog.Builder(MainActivity.this)
+                        .setMessage("404 BAD REQUEST")
+                        .setPositiveButton("확인", null)
+                        .show();
+            }
+        }
+    };
+
     class ItemSelectedListener implements BottomNavigationView.OnNavigationItemSelectedListener {
+        @SuppressLint("NonConstantResourceId")
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
             FragmentTransaction transaction = fragmentManager.beginTransaction();
@@ -188,5 +263,23 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
     }
+}
+class DataRequest extends StringRequest {
+    private final static String URL = "http://167.179.103.235/setData.php";
+    private Map<String, String> map;
 
+    public DataRequest(String date, int waterCnt, int stepCnt, float tempValue, String email,  Response.Listener<String> listener) {
+        super(Method.POST, URL, listener, null);
+        map = new HashMap<>();
+        map.put("date", date);
+        map.put("waterCnt", String.valueOf(waterCnt));
+        map.put("stepCnt", String.valueOf(stepCnt));
+        map.put("tempValue", String.valueOf(tempValue));
+        map.put("email", email);
+    }
+
+    @Override
+    protected Map<String, String> getParams() throws AuthFailureError {
+        return map;
+    }
 }
