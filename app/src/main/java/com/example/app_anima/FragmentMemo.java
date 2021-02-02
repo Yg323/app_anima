@@ -353,14 +353,22 @@ public class FragmentMemo extends Fragment {
                 JSONObject jsonObject = new JSONObject(response);
                 Log.d("Step Result", response);
                 boolean success = jsonObject.getBoolean("success");
-                JSONArray jsonArray = jsonObject.getJSONArray("data");
+                boolean null_check = jsonObject.getBoolean("null");
 
                 if (success) {
-                    for (int i = 0; i < jsonArray.length(); i++) {
-                        JSONObject jObject = jsonArray.getJSONObject(i);
-                        String time = jObject.getString("time");
-                        weekStepDays[5 - i] = getDateDay(time);
-                        weekSteps[5 - i] = jObject.getInt("cnt_step");
+                    if(null_check){
+                        for (int i = 0; i < 6 ; i++) {
+                            weekStepDays[5 - i] = "-";
+                            weekSteps[5 - i] = 0;
+                        }
+                    }else{
+                        JSONArray jsonArray = jsonObject.getJSONArray("data");
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            JSONObject jObject = jsonArray.getJSONObject(i);
+                            String time = jObject.getString("time");
+                            weekStepDays[5 - i] = getDateDay(time);
+                            weekSteps[5 - i] = jObject.getInt("cnt_step");
+                        }
                     }
                     drawWeekRunChart();
 
@@ -381,21 +389,26 @@ public class FragmentMemo extends Fragment {
         @Override
         public void onResponse(String response) {
             try {
-
-                Log.d("waterResponseListener", "실행");
-
                 JSONObject jsonObject = new JSONObject(response);
                 Log.d("Water Result", response);
                 boolean success = jsonObject.getBoolean("success");
-                JSONArray jsonArray = jsonObject.getJSONArray("data");
-
+                boolean null_check = jsonObject.getBoolean("null");
+                Log.d("water", String.valueOf(null_check));
                 if (success) {
                     Log.d("water 성공", "실행");
-                    for (int i = 0; i < jsonArray.length(); i++) {
-                        JSONObject jObject = jsonArray.getJSONObject(i);
-                        String time = jObject.getString("time");
-                        waterDays[5 - i] = getDateDay(time);
-                        waterSums[5 - i] = jObject.getInt("cnt_water");
+                    if(null_check){
+                        for (int i = 0; i < 6 ; i++) {
+                            waterDays[5 - i] = "-";
+                            waterSums[5 - i] = 0;
+                        }
+                    } else{
+                        JSONArray jsonArray = jsonObject.getJSONArray("data");
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            JSONObject jObject = jsonArray.getJSONObject(i);
+                            String time = jObject.getString("time");
+                            waterDays[5 - i] = getDateDay(time);
+                            waterSums[5 - i] = jObject.getInt("cnt_water");
+                        }
                     }
                     drawWaterChart();
 

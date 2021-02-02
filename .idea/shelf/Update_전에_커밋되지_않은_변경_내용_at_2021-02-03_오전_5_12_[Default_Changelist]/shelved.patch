@@ -1,0 +1,603 @@
+Index: app/src/main/java/com/example/app_anima/FragmentMemo.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.example.app_anima;\r\n\r\nimport android.annotation.SuppressLint;\r\nimport android.database.Cursor;\r\nimport android.database.sqlite.SQLiteDatabase;\r\nimport android.graphics.Color;\r\nimport android.os.Build;\r\nimport android.os.Bundle;\r\nimport android.util.Log;\r\nimport android.view.LayoutInflater;\r\nimport android.view.View;\r\nimport android.view.View.OnClickListener;\r\nimport android.view.ViewGroup;\r\nimport android.widget.Button;\r\n\r\nimport androidx.annotation.NonNull;\r\nimport androidx.annotation.Nullable;\r\nimport androidx.annotation.RequiresApi;\r\nimport androidx.fragment.app.Fragment;\r\n\r\nimport com.android.volley.AuthFailureError;\r\nimport com.android.volley.RequestQueue;\r\nimport com.android.volley.Response;\r\nimport com.android.volley.toolbox.StringRequest;\r\nimport com.android.volley.toolbox.Volley;\r\nimport com.github.mikephil.charting.charts.BarChart;\r\nimport com.github.mikephil.charting.charts.LineChart;\r\nimport com.github.mikephil.charting.components.XAxis;\r\nimport com.github.mikephil.charting.components.YAxis;\r\nimport com.github.mikephil.charting.data.BarData;\r\nimport com.github.mikephil.charting.data.BarDataSet;\r\nimport com.github.mikephil.charting.data.BarEntry;\r\nimport com.github.mikephil.charting.data.Entry;\r\nimport com.github.mikephil.charting.data.LineData;\r\nimport com.github.mikephil.charting.data.LineDataSet;\r\nimport com.github.mikephil.charting.formatter.IndexAxisValueFormatter;\r\n\r\nimport org.json.JSONArray;\r\nimport org.json.JSONException;\r\nimport org.json.JSONObject;\r\n\r\nimport java.text.ParseException;\r\nimport java.text.SimpleDateFormat;\r\nimport java.util.ArrayList;\r\nimport java.util.Calendar;\r\nimport java.util.Date;\r\nimport java.util.HashMap;\r\nimport java.util.Locale;\r\nimport java.util.Map;\r\n\r\npublic class FragmentMemo extends Fragment {\r\n    ViewGroup viewGroup;\r\n\r\n    private DBHelper dbHelper;\r\n    private SQLiteDatabase db;\r\n\r\n    private Button btn_day, btn_week;\r\n\r\n    private Calendar cal;\r\n    private BarChart runChart, waterChart;\r\n    private LineChart lineChart;\r\n    private final String[] timeLabelList = new String[]{\"AM12\", \"AM1\", \"AM2\", \"AM3\", \"AM4\", \"AM5\", \"AM6\", \"AM7\", \"AM8\", \"AM9\", \"AM10\", \"AM11\",\r\n            \"PM12\", \"PM1\", \"PM2\", \"PM3\", \"PM4\", \"PM5\", \"PM6\", \"PM7\", \"PM8\", \"PM9\", \"PM10\", \"PM11\", \"AM12\"};\r\n\r\n    private final String[] waterDays = new String[]{\"-\",\"-\",\"-\",\"-\",\"-\",\"-\",\"-\"}, weekStepDays = new String[]{\"-\",\"-\",\"-\",\"-\",\"-\",\"-\",\"-\"};\r\n    private int[] stepSums = new int[24], waterSums = new int[7], weekSteps = new int[7];\r\n    private float[] tempValues = new float[24];\r\n    private int hour;\r\n    private String email;\r\n    private String time;\r\n\r\n\r\n    @RequiresApi(api = Build.VERSION_CODES.O)\r\n    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {\r\n        viewGroup = (ViewGroup) inflater.inflate(R.layout.fragment_memo, container, false);\r\n        runChart = viewGroup.findViewById(R.id.barChart);\r\n        waterChart = viewGroup.findViewById(R.id.barChartWater);\r\n        lineChart = viewGroup.findViewById(R.id.lineChart);\r\n        btn_day = viewGroup.findViewById(R.id.btn_day);\r\n        btn_week = viewGroup.findViewById(R.id.btn_week);\r\n\r\n        email = PreferenceManager.getString(getContext(), \"userEmail\");\r\n        time = PreferenceManager.getString(getContext(), \"date\");\r\n        cal = Calendar.getInstance();\r\n        hour = cal.get(Calendar.HOUR);\r\n        dbHelper = new DBHelper(getContext());\r\n\r\n        processingStep();\r\n        processingTemp();\r\n        processingWater();\r\n\r\n        drawDayRunChart();\r\n        drawLineChart();\r\n\r\n        btn_day.setOnClickListener(new OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                drawDayRunChart();\r\n            }\r\n        });\r\n\r\n        btn_week.setOnClickListener(new OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                processingWeekStep();\r\n            }\r\n        });\r\n\r\n        return viewGroup;\r\n    }\r\n\r\n    @Override\r\n    public void onStart() {\r\n        super.onStart();\r\n    }\r\n\r\n    public void processingStep(){\r\n        @SuppressLint(\"SimpleDateFormat\") SimpleDateFormat format = new SimpleDateFormat(\"yyyy-MM-dd\");\r\n        String date = format.format(Calendar.getInstance().getTime());\r\n\r\n        dbHelper = new DBHelper(getContext());\r\n        db = dbHelper.getReadableDatabase();\r\n\r\n        for (int i = 0; i < hour + 1; i++) {\r\n            String newDate;\r\n            int stepSum = 0;\r\n\r\n            if(i<10) newDate = date + \" 0\" + i;\r\n            else newDate = date + \" \" + i;\r\n\r\n            Cursor cursor = db.rawQuery(\"SELECT stepcnt FROM steptable WHERE writedate LIKE '\"+newDate+\"%'\", null);\r\n            while (cursor.moveToNext()){\r\n                int stepCnt = cursor.getInt(0);\r\n                stepSum += stepCnt;\r\n            }\r\n            stepSums[i] = stepSum;\r\n        }\r\n\r\n        db.close();\r\n\r\n    }\r\n\r\n    public void processingTemp(){\r\n        @SuppressLint(\"SimpleDateFormat\") SimpleDateFormat format = new SimpleDateFormat(\"yyyy-MM-dd\");\r\n        String date = format.format(Calendar.getInstance().getTime());\r\n\r\n        dbHelper = new DBHelper(getContext());\r\n        db = dbHelper.getReadableDatabase();\r\n\r\n        for (int i = 0; i <= hour + 1; i++) {\r\n            String newDate;\r\n            int cnt = 0;\r\n            float tempSum = (float) 0.00;\r\n            if(i<10) newDate = date + \" 0\" + i;\r\n            else newDate = date + \" \" + i;\r\n\r\n            Cursor cursor = db.rawQuery(\"SELECT tempvalue FROM temptable WHERE writedate LIKE '\"+newDate+\"%'\", null);\r\n            while (cursor.moveToNext()){\r\n                float tempValue = cursor.getFloat(0);\r\n                cnt++;\r\n                tempSum += tempValue;\r\n            }\r\n            if(cnt == 0){\r\n                tempValues[i] = (float) 27.0;\r\n            }else{\r\n                tempValues[i] = tempSum / cnt;\r\n            }\r\n\r\n        }\r\n        db.close();\r\n\r\n    }\r\n\r\n    public void processingWeekStep(){\r\n        StepRequest stepRequest = new StepRequest(email, stepResponseListener);\r\n        RequestQueue queue = Volley.newRequestQueue(getContext());\r\n        queue.add(stepRequest);\r\n        weekSteps[6] = PreferenceManager.getInt(getContext(), \"run_step\") + PreferenceManager.getInt(getContext(), \"walk_step\");\r\n        weekStepDays[6] = getDateDay(time);\r\n    }\r\n\r\n    public void processingWater(){\r\n        Log.d(\"processingWater\",\"실행\");\r\n        WaterRequest waterRequest = new WaterRequest(email, waterResponseListener);\r\n        RequestQueue queue = Volley.newRequestQueue(getContext());\r\n        queue.add(waterRequest);\r\n        waterSums[6] = PreferenceManager.getInt(getContext(), \"water_count\");\r\n        waterDays[6] = getDateDay(time);\r\n    }\r\n\r\n    public void drawDayRunChart() {\r\n\r\n        ArrayList<BarEntry> entries = new ArrayList<>();\r\n\r\n        for (int i = 0; i <= hour; i++) entries.add(new BarEntry(i, stepSums[i]));\r\n\r\n        BarDataSet barDataSet = new BarDataSet(entries, \"\");\r\n        barDataSet.setColors(Color.parseColor(\"#86E57F\"));\r\n\r\n        BarData barData = new BarData(barDataSet);\r\n        barData.setBarWidth((float) 0.5);//막대그래프 너비 설정\r\n\r\n        runChart.setData(barData);\r\n        runChart.setFitBars(true);\r\n\r\n        runChart.getDescription().setEnabled(false); //차트옆에 표기된 description 안보이게 설정\r\n        runChart.setPinchZoom(false); //줌인아웃 설정\r\n        runChart.setDrawGridBackground(false); //격자구조 여부\r\n        runChart.setVisibleXRangeMaximum(25); //x축 표시 범위\r\n        runChart.setHighlightPerTapEnabled(false); //하이라이트 없애기\r\n        runChart.setTouchEnabled(false); // 그래프 터치햇을때\r\n        runChart.setDoubleTapToZoomEnabled(false); // 더블 탭으로 확대/축소 불가능하게\r\n        runChart.getLegend().setEnabled(false); //차트 범례 설정\r\n\r\n        XAxis xAxis = runChart.getXAxis();\r\n        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM); //x축을 아래에 두기\r\n        xAxis.setDrawAxisLine(false); // 축(축선)을 따라 선(축선)을 그려야하는 경우\r\n        xAxis.setValueFormatter(new IndexAxisValueFormatter(timeLabelList)); //라벨 설정\r\n        xAxis.setDrawGridLines(false); // no grid lines\r\n        xAxis.setGranularity(1f); //라벨 표시 설정\r\n\r\n        YAxis left = runChart.getAxisLeft();\r\n        left.setDrawLabels(false); // 왼쪽 y축 값 보이지 않게\r\n        left.setDrawAxisLine(false); // line X\r\n        left.setDrawGridLines(false); // no grid lines\r\n        runChart.getAxisRight().setEnabled(false); // no right axis\r\n\r\n        runChart.invalidate();\r\n    }\r\n\r\n    public void drawWeekRunChart() {\r\n\r\n        ArrayList<BarEntry> entries = new ArrayList<>();\r\n\r\n        for (int i = 0; i < 7; i++) entries.add(new BarEntry(i, weekSteps[i]));\r\n\r\n        BarDataSet barDataSet = new BarDataSet(entries, \"\");\r\n        barDataSet.setColors(Color.parseColor(\"#86E57F\"));\r\n\r\n        BarData barData = new BarData(barDataSet);\r\n        barData.setBarWidth((float) 0.5);//막대그래프 너비 설정\r\n\r\n        runChart.setData(barData);\r\n        runChart.setFitBars(true);\r\n\r\n        runChart.getDescription().setEnabled(false); //차트옆에 표기된 description 안보이게 설정\r\n        runChart.setPinchZoom(false); //줌인아웃 설정\r\n        runChart.setDrawGridBackground(false); //격자구조 여부\r\n        runChart.setVisibleXRangeMaximum(25); //x축 표시 범위\r\n        runChart.setHighlightPerTapEnabled(false); //하이라이트 없애기\r\n        runChart.setTouchEnabled(false); // 그래프 터치햇을때\r\n        runChart.setDoubleTapToZoomEnabled(false); // 더블 탭으로 확대/축소 불가능하게\r\n        runChart.getLegend().setEnabled(false); //차트 범례 설정\r\n\r\n        XAxis xAxis = runChart.getXAxis();\r\n        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM); //x축을 아래에 두기\r\n        xAxis.setDrawAxisLine(false); // 축(축선)을 따라 선(축선)을 그려야하는 경우\r\n        xAxis.setValueFormatter(new IndexAxisValueFormatter(weekStepDays)); //라벨 설정\r\n        xAxis.setDrawGridLines(false); // no grid lines\r\n        xAxis.setGranularity(1f); //라벨 표시 설정\r\n\r\n        YAxis left = runChart.getAxisLeft();\r\n        left.setDrawLabels(false); // 왼쪽 y축 값 보이지 않게\r\n        left.setDrawAxisLine(false); // line X\r\n        left.setDrawGridLines(false); // no grid lines\r\n        runChart.getAxisRight().setEnabled(false); // no right axis\r\n        runChart.invalidate();\r\n    }\r\n\r\n    public void drawLineChart() {\r\n        ArrayList<Entry> entries = new ArrayList<>();\r\n\r\n        for (int i = 0; i <= hour ; i++) entries.add(new BarEntry(i, tempValues[i]));\r\n        LineDataSet lineDataSet = new LineDataSet(entries, \"label\");\r\n        lineDataSet.setColor(Color.RED); //스타일 지정\r\n        lineDataSet.setValueTextColor(Color.BLUE); //스타일 지정\r\n\r\n        LineData lineData = new LineData(lineDataSet);\r\n        lineChart.setData(lineData);\r\n        lineChart.getDescription().setEnabled(false); //차트옆에 표기된 description 안보이게 설정\r\n        lineChart.getLegend().setEnabled(false); //차트 범례 설정\r\n        lineChart.getXAxis().setDrawGridLines(false); //격자 선을 그릴수 있는지\r\n        lineChart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM); //x축을 아래에 두기\r\n        lineChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(timeLabelList)); //라벨 설정\r\n        lineChart.getXAxis().setGranularity(1f); //라벨 표시 설정\r\n        lineChart.getAxisLeft().setDrawAxisLine(false); //축과 나란한 선을 그리는지\r\n        lineChart.getAxisLeft().setDrawGridLines(false); //격자 선을 그릴수 있는지\r\n        lineChart.getAxisLeft().setDrawLabels(false); //축의 레이블을 그릴수 있는지\r\n        lineChart.getAxisLeft().setAxisMinimum(20f); //최소값\r\n        lineChart.getAxisLeft().setAxisMaximum(30f); //최대값\r\n        lineChart.getAxisRight().setEnabled(false); //오른쪽 데이터 비활성화\r\n        lineChart.setDoubleTapToZoomEnabled(false); //더블탭시 확대 설정\r\n        lineChart.moveViewToX(lineData.getEntryCount()); //맨 오른쪽으로 옮기기\r\n        lineChart.setHighlightPerTapEnabled(false); //하이라이트 없애기\r\n\r\n\r\n        lineChart.setVisibleXRangeMaximum(25); //x축 표시 범위\r\n        lineChart.invalidate(); //refresh\r\n    }\r\n\r\n    public void drawWaterChart() {\r\n\r\n        ArrayList<BarEntry> entries = new ArrayList<>();\r\n\r\n        for (int i = 0; i < 7; i++) entries.add(new BarEntry(i, waterSums[i]));\r\n\r\n        BarDataSet barDataSet = new BarDataSet(entries, \" \");\r\n        barDataSet.setColors(Color.parseColor(\"#1070DE\"));\r\n\r\n        BarData barData = new BarData(barDataSet);\r\n        barData.setBarWidth((float) 0.5);//막대그래프 너비 설정\r\n\r\n        waterChart.setData(barData);\r\n        waterChart.setFitBars(true);\r\n\r\n        waterChart.getDescription().setEnabled(false); //차트옆에 표기된 description 안보이게 설정\r\n        waterChart.setPinchZoom(false); //줌인아웃 설정\r\n        waterChart.setDrawGridBackground(false); //격자구조 여부\r\n        waterChart.setTouchEnabled(false); // 그래프 터치햇을때\r\n        waterChart.setDoubleTapToZoomEnabled(false); // 더블 탭으로 확대/축소 불가능하게\r\n\r\n        XAxis xAxis = waterChart.getXAxis();\r\n        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM); //x축을 아래에 두기\r\n        xAxis.setValueFormatter(new IndexAxisValueFormatter(waterDays)); //라벨 설정\r\n        xAxis.setDrawAxisLine(false); // 축(축선)을 따라 선(축선)을 그려야하는 경우\r\n        xAxis.setDrawGridLines(false); // no grid lines\r\n\r\n        YAxis left = waterChart.getAxisLeft();\r\n        left.setDrawLabels(false); // 왼쪽 y축 값 보이지 않게\r\n        left.setDrawAxisLine(false); // line X\r\n        left.setDrawGridLines(false); // no grid lines\r\n        left.setDrawZeroLine(true); // draw a zero line\r\n        waterChart.getAxisRight().setEnabled(false); // no right axis\r\n\r\n        waterChart.getLegend().setEnabled(false); // 차트 범례 설정\r\n        waterChart.invalidate();\r\n    }\r\n\r\n    Response.Listener<String> stepResponseListener = new Response.Listener<String>() {\r\n        @Override\r\n        public void onResponse(String response) {\r\n            try {\r\n                JSONObject jsonObject = new JSONObject(response);\r\n                Log.d(\"Step Result\", response);\r\n                boolean success = jsonObject.getBoolean(\"success\");\r\n                JSONArray jsonArray = jsonObject.getJSONArray(\"data\");\r\n\r\n                if (success) {\r\n                    for (int i = 0; i < jsonArray.length() ; i++) {\r\n                        JSONObject jObject = jsonArray.getJSONObject(i);\r\n                        String time = jObject.getString(\"time\");\r\n                        weekStepDays[5-i] = getDateDay(time);\r\n                        weekSteps[5-i] = jObject.getInt(\"cnt_step\");\r\n                    }\r\n                    drawWeekRunChart();\r\n\r\n                } else {\r\n                    Log.d(\"서버 전송\",\"실패\");\r\n                }\r\n            } catch (JSONException e) {\r\n                e.printStackTrace();\r\n                androidx.appcompat.app.AlertDialog builder = new androidx.appcompat.app.AlertDialog.Builder(getContext())\r\n                        .setMessage(\"404 BAD REQUEST\")\r\n                        .setPositiveButton(\"확인\", null)\r\n                        .show();\r\n            }\r\n        }\r\n    };\r\n\r\n    Response.Listener<String> waterResponseListener = new Response.Listener<String>() {\r\n        @Override\r\n        public void onResponse(String response) {\r\n            try {\r\n\r\n                Log.d(\"waterResponseListener\",\"실행\");\r\n\r\n                JSONObject jsonObject = new JSONObject(response);\r\n                Log.d(\"Water Result\", response);\r\n                boolean success = jsonObject.getBoolean(\"success\");\r\n                JSONArray jsonArray = jsonObject.getJSONArray(\"data\");\r\n\r\n                if (success) {\r\n                    Log.d(\"water 성공\",\"실행\");\r\n                    for (int i = 0; i < jsonArray.length() ; i++) {\r\n                        JSONObject jObject = jsonArray.getJSONObject(i);\r\n                        String time = jObject.getString(\"time\");\r\n                        waterDays[5-i] = getDateDay(time);\r\n                        waterSums[5-i] = jObject.getInt(\"cnt_water\");\r\n                    }\r\n                    drawWaterChart();\r\n\r\n                } else {\r\n                    Log.d(\"water 실패\",\"실행\");\r\n                }\r\n            } catch (Exception e) {\r\n                e.printStackTrace();\r\n                androidx.appcompat.app.AlertDialog builder = new androidx.appcompat.app.AlertDialog.Builder(getContext())\r\n                        .setMessage(\"404 BAD REQUEST\")\r\n                        .setPositiveButton(\"확인\", null)\r\n                        .show();\r\n            }\r\n        }\r\n    };\r\n\r\n    public String getDateDay(String currentDate) {\r\n\r\n        String dayOfWeek = \"\" ;\r\n        SimpleDateFormat dateFormat = new SimpleDateFormat(\"yyyy-MM-dd\", Locale.KOREAN) ;\r\n        Date nDate = null;\r\n        try {\r\n            nDate = dateFormat.parse(currentDate);\r\n        } catch (ParseException e) {\r\n            e.printStackTrace();\r\n        }\r\n\r\n        Calendar calendar = Calendar.getInstance();\r\n        calendar.setTime(nDate);\r\n        int dayNum = calendar.get(Calendar.DAY_OF_WEEK) ;\r\n\r\n        switch(dayNum){\r\n            case 1:\r\n                dayOfWeek = \"일\";\r\n                break ;\r\n            case 2:\r\n                dayOfWeek = \"월\";\r\n                break ;\r\n            case 3:\r\n                dayOfWeek = \"화\";\r\n                break ;\r\n            case 4:\r\n                dayOfWeek = \"수\";\r\n                break ;\r\n            case 5:\r\n                dayOfWeek = \"목\";\r\n                break ;\r\n            case 6:\r\n                dayOfWeek = \"금\";\r\n                break ;\r\n            case 7:\r\n                dayOfWeek = \"토\";\r\n                break ;\r\n        }\r\n\r\n        Log.d(\"getDateDay\",\"date: \"+currentDate +\", \"+dayOfWeek+\"요일\");\r\n        return dayOfWeek ;\r\n    }\r\n}\r\n\r\nclass WaterRequest extends StringRequest {\r\n    private final static String URL = \"http://167.179.103.235/getWater.php\";\r\n    private Map<String, String> map;\r\n\r\n    public WaterRequest(String email, Response.Listener<String> listener) {\r\n        super(Method.POST, URL, listener, null);\r\n        map = new HashMap<>();\r\n        map.put(\"email\", email);\r\n    }\r\n\r\n    @Override\r\n    protected Map<String, String> getParams() throws AuthFailureError {\r\n        return map;\r\n    }\r\n}\r\n\r\nclass StepRequest extends StringRequest {\r\n    private final static String URL = \"http://167.179.103.235/getStep.php\";\r\n    private Map<String, String> map;\r\n\r\n    public StepRequest(String email, Response.Listener<String> listener) {\r\n        super(Method.POST, URL, listener, null);\r\n        map = new HashMap<>();\r\n        map.put(\"email\", email);\r\n    }\r\n\r\n    @Override\r\n    protected Map<String, String> getParams() throws AuthFailureError {\r\n        return map;\r\n    }\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/app_anima/FragmentMemo.java	(revision 7a763e838a30111da8062a0f1d8cb5e8f1a41852)
++++ app/src/main/java/com/example/app_anima/FragmentMemo.java	(date 1612296738181)
+@@ -12,6 +12,7 @@
+ import android.view.View.OnClickListener;
+ import android.view.ViewGroup;
+ import android.widget.Button;
++import android.widget.TextView;
+ 
+ import androidx.annotation.NonNull;
+ import androidx.annotation.Nullable;
+@@ -55,6 +56,7 @@
+     private SQLiteDatabase db;
+ 
+     private Button btn_day, btn_week;
++    private TextView tv_memo_food;
+ 
+     private Calendar cal;
+     private BarChart runChart, waterChart;
+@@ -62,7 +64,7 @@
+     private final String[] timeLabelList = new String[]{"AM12", "AM1", "AM2", "AM3", "AM4", "AM5", "AM6", "AM7", "AM8", "AM9", "AM10", "AM11",
+             "PM12", "PM1", "PM2", "PM3", "PM4", "PM5", "PM6", "PM7", "PM8", "PM9", "PM10", "PM11", "AM12"};
+ 
+-    private final String[] waterDays = new String[]{"-","-","-","-","-","-","-"}, weekStepDays = new String[]{"-","-","-","-","-","-","-"};
++    private final String[] waterDays = new String[]{"-", "-", "-", "-", "-", "-", "-"}, weekStepDays = new String[]{"-", "-", "-", "-", "-", "-", "-"};
+     private int[] stepSums = new int[24], waterSums = new int[7], weekSteps = new int[7];
+     private float[] tempValues = new float[24];
+     private int hour;
+@@ -76,6 +78,7 @@
+         runChart = viewGroup.findViewById(R.id.barChart);
+         waterChart = viewGroup.findViewById(R.id.barChartWater);
+         lineChart = viewGroup.findViewById(R.id.lineChart);
++        tv_memo_food = viewGroup.findViewById(R.id.tv_memo_food);
+         btn_day = viewGroup.findViewById(R.id.btn_day);
+         btn_week = viewGroup.findViewById(R.id.btn_week);
+ 
+@@ -91,6 +94,7 @@
+ 
+         drawDayRunChart();
+         drawLineChart();
++        settingFood();
+ 
+         btn_day.setOnClickListener(new OnClickListener() {
+             @Override
+@@ -114,7 +118,7 @@
+         super.onStart();
+     }
+ 
+-    public void processingStep(){
++    public void processingStep() {
+         @SuppressLint("SimpleDateFormat") SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+         String date = format.format(Calendar.getInstance().getTime());
+ 
+@@ -125,11 +129,11 @@
+             String newDate;
+             int stepSum = 0;
+ 
+-            if(i<10) newDate = date + " 0" + i;
++            if (i < 10) newDate = date + " 0" + i;
+             else newDate = date + " " + i;
+ 
+-            Cursor cursor = db.rawQuery("SELECT stepcnt FROM steptable WHERE writedate LIKE '"+newDate+"%'", null);
+-            while (cursor.moveToNext()){
++            Cursor cursor = db.rawQuery("SELECT stepcnt FROM steptable WHERE writedate LIKE '" + newDate + "%'", null);
++            while (cursor.moveToNext()) {
+                 int stepCnt = cursor.getInt(0);
+                 stepSum += stepCnt;
+             }
+@@ -140,7 +144,7 @@
+ 
+     }
+ 
+-    public void processingTemp(){
++    public void processingTemp() {
+         @SuppressLint("SimpleDateFormat") SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+         String date = format.format(Calendar.getInstance().getTime());
+ 
+@@ -151,18 +155,18 @@
+             String newDate;
+             int cnt = 0;
+             float tempSum = (float) 0.00;
+-            if(i<10) newDate = date + " 0" + i;
++            if (i < 10) newDate = date + " 0" + i;
+             else newDate = date + " " + i;
+ 
+-            Cursor cursor = db.rawQuery("SELECT tempvalue FROM temptable WHERE writedate LIKE '"+newDate+"%'", null);
+-            while (cursor.moveToNext()){
++            Cursor cursor = db.rawQuery("SELECT tempvalue FROM temptable WHERE writedate LIKE '" + newDate + "%'", null);
++            while (cursor.moveToNext()) {
+                 float tempValue = cursor.getFloat(0);
+                 cnt++;
+                 tempSum += tempValue;
+             }
+-            if(cnt == 0){
++            if (cnt == 0) {
+                 tempValues[i] = (float) 27.0;
+-            }else{
++            } else {
+                 tempValues[i] = tempSum / cnt;
+             }
+ 
+@@ -171,7 +175,7 @@
+ 
+     }
+ 
+-    public void processingWeekStep(){
++    public void processingWeekStep() {
+         StepRequest stepRequest = new StepRequest(email, stepResponseListener);
+         RequestQueue queue = Volley.newRequestQueue(getContext());
+         queue.add(stepRequest);
+@@ -179,8 +183,8 @@
+         weekStepDays[6] = getDateDay(time);
+     }
+ 
+-    public void processingWater(){
+-        Log.d("processingWater","실행");
++    public void processingWater() {
++        Log.d("processingWater", "실행");
+         WaterRequest waterRequest = new WaterRequest(email, waterResponseListener);
+         RequestQueue queue = Volley.newRequestQueue(getContext());
+         queue.add(waterRequest);
+@@ -270,7 +274,7 @@
+     public void drawLineChart() {
+         ArrayList<Entry> entries = new ArrayList<>();
+ 
+-        for (int i = 0; i <= hour ; i++) entries.add(new BarEntry(i, tempValues[i]));
++        for (int i = 0; i <= hour; i++) entries.add(new BarEntry(i, tempValues[i]));
+         LineDataSet lineDataSet = new LineDataSet(entries, "label");
+         lineDataSet.setColor(Color.RED); //스타일 지정
+         lineDataSet.setValueTextColor(Color.BLUE); //스타일 지정
+@@ -336,6 +340,12 @@
+         waterChart.invalidate();
+     }
+ 
++    public void settingFood() {
++        GetFoodRequest getFoodRequest = new GetFoodRequest(email, time, foodResponseListener);
++        RequestQueue queue = Volley.newRequestQueue(getContext());
++        queue.add(getFoodRequest);
++    }
++
+     Response.Listener<String> stepResponseListener = new Response.Listener<String>() {
+         @Override
+         public void onResponse(String response) {
+@@ -346,16 +356,16 @@
+                 JSONArray jsonArray = jsonObject.getJSONArray("data");
+ 
+                 if (success) {
+-                    for (int i = 0; i < jsonArray.length() ; i++) {
++                    for (int i = 0; i < jsonArray.length(); i++) {
+                         JSONObject jObject = jsonArray.getJSONObject(i);
+                         String time = jObject.getString("time");
+-                        weekStepDays[5-i] = getDateDay(time);
+-                        weekSteps[5-i] = jObject.getInt("cnt_step");
++                        weekStepDays[5 - i] = getDateDay(time);
++                        weekSteps[5 - i] = jObject.getInt("cnt_step");
+                     }
+                     drawWeekRunChart();
+ 
+                 } else {
+-                    Log.d("서버 전송","실패");
++                    Log.d("서버 전송", "실패");
+                 }
+             } catch (JSONException e) {
+                 e.printStackTrace();
+@@ -372,7 +382,7 @@
+         public void onResponse(String response) {
+             try {
+ 
+-                Log.d("waterResponseListener","실행");
++                Log.d("waterResponseListener", "실행");
+ 
+                 JSONObject jsonObject = new JSONObject(response);
+                 Log.d("Water Result", response);
+@@ -380,17 +390,17 @@
+                 JSONArray jsonArray = jsonObject.getJSONArray("data");
+ 
+                 if (success) {
+-                    Log.d("water 성공","실행");
+-                    for (int i = 0; i < jsonArray.length() ; i++) {
++                    Log.d("water 성공", "실행");
++                    for (int i = 0; i < jsonArray.length(); i++) {
+                         JSONObject jObject = jsonArray.getJSONObject(i);
+                         String time = jObject.getString("time");
+-                        waterDays[5-i] = getDateDay(time);
+-                        waterSums[5-i] = jObject.getInt("cnt_water");
++                        waterDays[5 - i] = getDateDay(time);
++                        waterSums[5 - i] = jObject.getInt("cnt_water");
+                     }
+                     drawWaterChart();
+ 
+                 } else {
+-                    Log.d("water 실패","실행");
++                    Log.d("water 실패", "실행");
+                 }
+             } catch (Exception e) {
+                 e.printStackTrace();
+@@ -402,10 +412,61 @@
+         }
+     };
+ 
++    Response.Listener<String> foodResponseListener = new Response.Listener<String>() {
++        @Override
++        public void onResponse(String response) {
++            try {
++
++                Log.d("foodResponseListener", "실행");
++
++                JSONObject jsonObject = new JSONObject(response);
++                Log.d("Food Result", response);
++                boolean success = jsonObject.getBoolean("success");
++                boolean null_check = jsonObject.getBoolean("null");
++
++                if (success) {
++                    Log.d("Food 성공", "실행");
++                    if (null_check) {
++                        tv_memo_food.setText("아직 섭취한 사료가 없습니다!");
++                    } else {
++                        StringBuilder txt_food = new StringBuilder();
++
++                        JSONArray jsonArray = jsonObject.getJSONArray("data");
++
++                        for (int i = 0; i < jsonArray.length(); i++) {
++                            JSONObject jObject = jsonArray.getJSONObject(i);
++                            int foodType = jObject.getInt("food_type");
++                            double kcal = jObject.getDouble("kcal");
++                            if (foodType == 0) {
++                                txt_food.append("사료         " + kcal + "kcal\n");
++                            } else {
++                                txt_food.append("간식         " + kcal + "kcal\n");
++                            }
++                        }
++                        tv_memo_food.setText(txt_food);
++
++                    }
++
++
++                    drawWaterChart();
++
++                } else {
++                    Log.d("Food 실패", "실행");
++                }
++            } catch (Exception e) {
++                e.printStackTrace();
++                androidx.appcompat.app.AlertDialog builder = new androidx.appcompat.app.AlertDialog.Builder(getContext())
++                        .setMessage("404 BAD REQUEST")
++                        .setPositiveButton("확인", null)
++                        .show();
++            }
++        }
++    };
++
+     public String getDateDay(String currentDate) {
+ 
+-        String dayOfWeek = "" ;
+-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.KOREAN) ;
++        String dayOfWeek = "";
++        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.KOREAN);
+         Date nDate = null;
+         try {
+             nDate = dateFormat.parse(currentDate);
+@@ -415,34 +476,34 @@
+ 
+         Calendar calendar = Calendar.getInstance();
+         calendar.setTime(nDate);
+-        int dayNum = calendar.get(Calendar.DAY_OF_WEEK) ;
++        int dayNum = calendar.get(Calendar.DAY_OF_WEEK);
+ 
+-        switch(dayNum){
++        switch (dayNum) {
+             case 1:
+                 dayOfWeek = "일";
+-                break ;
++                break;
+             case 2:
+                 dayOfWeek = "월";
+-                break ;
++                break;
+             case 3:
+                 dayOfWeek = "화";
+-                break ;
++                break;
+             case 4:
+                 dayOfWeek = "수";
+-                break ;
++                break;
+             case 5:
+                 dayOfWeek = "목";
+-                break ;
++                break;
+             case 6:
+                 dayOfWeek = "금";
+-                break ;
++                break;
+             case 7:
+                 dayOfWeek = "토";
+-                break ;
++                break;
+         }
+ 
+-        Log.d("getDateDay","date: "+currentDate +", "+dayOfWeek+"요일");
+-        return dayOfWeek ;
++        Log.d("getDateDay", "date: " + currentDate + ", " + dayOfWeek + "요일");
++        return dayOfWeek;
+     }
+ }
+ 
+@@ -477,3 +538,20 @@
+         return map;
+     }
+ }
++
++class GetFoodRequest extends StringRequest {
++    private final static String URL = "http://167.179.103.235/getFood.php";
++    private Map<String, String> map;
++
++    public GetFoodRequest(String email, String today, Response.Listener<String> listener) {
++        super(Method.POST, URL, listener, null);
++        map = new HashMap<>();
++        map.put("email", email);
++        map.put("today", today);
++    }
++
++    @Override
++    protected Map<String, String> getParams() throws AuthFailureError {
++        return map;
++    }
++}
+Index: app/src/main/java/com/example/app_anima/MainActivity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.example.app_anima;\r\n\r\nimport android.annotation.SuppressLint;\r\nimport android.app.ActivityManager;\r\nimport android.app.AlertDialog;\r\nimport android.bluetooth.BluetoothAdapter;\r\nimport android.bluetooth.BluetoothDevice;\r\nimport android.content.BroadcastReceiver;\r\nimport android.content.Context;\r\nimport android.content.DialogInterface;\r\nimport android.content.Intent;\r\nimport android.content.IntentFilter;\r\nimport android.database.Cursor;\r\nimport android.database.sqlite.SQLiteDatabase;\r\nimport android.os.Build;\r\nimport android.os.Bundle;\r\nimport android.provider.Settings;\r\nimport android.util.Log;\r\nimport android.view.MenuItem;\r\n\r\nimport androidx.annotation.NonNull;\r\nimport androidx.annotation.Nullable;\r\nimport androidx.annotation.RequiresApi;\r\nimport androidx.appcompat.app.AppCompatActivity;\r\nimport androidx.fragment.app.Fragment;\r\nimport androidx.fragment.app.FragmentManager;\r\nimport androidx.fragment.app.FragmentTransaction;\r\n\r\nimport com.android.volley.AuthFailureError;\r\nimport com.android.volley.RequestQueue;\r\nimport com.android.volley.Response;\r\nimport com.android.volley.toolbox.StringRequest;\r\nimport com.android.volley.toolbox.Volley;\r\n\r\nimport com.google.android.material.bottomnavigation.BottomNavigationView;\r\n\r\nimport org.json.JSONException;\r\nimport org.json.JSONObject;\r\n\r\nimport java.text.SimpleDateFormat;\r\nimport java.util.Calendar;\r\nimport java.util.HashMap;\r\nimport java.util.Map;\r\nimport java.util.Objects;\r\nimport java.util.Set;\r\n\r\npublic class MainActivity extends AppCompatActivity {\r\n    private FragmentManager fragmentManager = getSupportFragmentManager();\r\n    private FragmentHome fragmentHome = new FragmentHome();\r\n    private FragmentMemo fragmentMemo = new FragmentMemo();\r\n    private FragmentMagazin fragmentMagazin = new FragmentMagazin();\r\n\r\n    private static final int REQUEST_ENABLE_BT = 10; // 블루투스 활성화 상태\r\n    private BluetoothAdapter bluetoothAdapter; // 블루투스 어댑터\r\n    private Set<BluetoothDevice> devices; // 블루투스 디바이스 데이터 셋\r\n\r\n    String class_name = MyBTService.class.getName();\r\n\r\n    private Calendar cal;\r\n    private DBHelper dbHelper;\r\n    private SQLiteDatabase db;\r\n\r\n    @RequiresApi(api = Build.VERSION_CODES.O)\r\n    @Override\r\n    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {\r\n        super.onActivityResult(requestCode, resultCode, data);\r\n        switch (requestCode) {\r\n            case REQUEST_ENABLE_BT:\r\n                if (requestCode == RESULT_OK) { // '사용'을 눌렀을 때\r\n                    selectBluetoothDevice();\r\n                } else { // '취소'를 눌렀을 때\r\n                    // 여기에 처리 할 코드를 작성하세요.\r\n                }\r\n                break;\r\n            case 0:\r\n\r\n        }\r\n    }\r\n\r\n    @RequiresApi(api = Build.VERSION_CODES.O)\r\n    @Override\r\n    protected void onCreate(Bundle savedInstanceState) {\r\n        super.onCreate(savedInstanceState);\r\n        setContentView(R.layout.activity_main);\r\n\r\n        // DB 생성\r\n        dbHelper = new DBHelper(this);\r\n        db = dbHelper.getWritableDatabase();\r\n        dbHelper.onCreate(db);\r\n\r\n        final FragmentTransaction transaction = fragmentManager.beginTransaction();\r\n        transaction.replace(R.id.frameLayout, fragmentHome).commitAllowingStateLoss();\r\n        BottomNavigationView bottomNavigationView = findViewById(R.id.navigationView);\r\n        bottomNavigationView.setOnNavigationItemSelectedListener(new ItemSelectedListener());\r\n\r\n        // 블루투스 활성화하기\r\n        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // 블루투스 어댑터를 디폴트 어댑터로 설정\r\n        if (bluetoothAdapter == null) { // 디바이스가 블루투스를 지원하지 않을 때\r\n            System.out.println(\"해당 기기에서 지원하지 않습니다. \");\r\n        } else { // 디바이스가 블루투스를 지원 할 때\r\n            if (bluetoothAdapter.isEnabled()) { // 블루투스가 활성화 상태 (기기에 블루투스가 켜져있음)\r\n                selectBluetoothDevice(); // 블루투스 디바이스 선택 함수 호출\r\n            } else { // 블루투스가 비 활성화 상태 (기기에 블루투스가 꺼져있음)\r\n                // 블루투스를 활성화 하기 위한 다이얼로그 출력\r\n                Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);\r\n                // 선택한 값이 onActivityResult 함수에서 콜백된다.\r\n                startActivityForResult(intent, REQUEST_ENABLE_BT);\r\n            }\r\n        }\r\n\r\n        if (isServiceRunning(class_name)) {\r\n            this.registerReceiver(receiver, new IntentFilter(\"service\"));\r\n        }\r\n\r\n        cal = Calendar.getInstance();\r\n\r\n        /*다음날이 되었을 때*/\r\n        @SuppressLint(\"SimpleDateFormat\") SimpleDateFormat format = new SimpleDateFormat(\"yyyy-MM-dd\");\r\n        String date = format.format(Calendar.getInstance().getTime());\r\n        String yesterday = PreferenceManager.getString(this, \"date\");\r\n        if (!Objects.equals(yesterday, date)) {\r\n            sendServer(yesterday);\r\n            setInitData(date);\r\n            PreferenceManager.setInt(this, \"water_count\", 0);\r\n            PreferenceManager.setString(this, \"date\", date);\r\n        }\r\n    }\r\n\r\n    @Override\r\n    protected void onDestroy() {\r\n        super.onDestroy();\r\n        this.unregisterReceiver(receiver);\r\n    }\r\n\r\n    public Boolean isServiceRunning(String class_name){\r\n        // 시스템 내부의 액티비티 상태를 파악하는 ActivityManager객체를 생성한다.\r\n        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);\r\n        //  manager.getRunningServices(가져올 서비스 목록 개수) - 현재 시스템에서 동작 중인 모든 서비스 목록을 얻을 수 있다.\r\n        // 리턴값은 List<ActivityManager.RunningServiceInfo>이다. (ActivityManager.RunningServiceInfo의 객체를 담은 List)\r\n        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {\r\n            // ActivityManager.RunningServiceInfo의 객체를 통해 현재 실행중인 서비스의 정보를 가져올 수 있다.\r\n            if (class_name.equals(service.service.getClassName())) {\r\n                return true;\r\n            }\r\n        }\r\n        return  false;\r\n    }\r\n\r\n    BroadcastReceiver receiver = new BroadcastReceiver() {\r\n        @Override\r\n        public void onReceive(Context context, Intent intent) {\r\n            Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frameLayout);\r\n            if (fragment instanceof FragmentHome) ((FragmentHome) fragment).settingData();\r\n        }\r\n    };\r\n\r\n    @RequiresApi(api = Build.VERSION_CODES.O)\r\n    public void selectBluetoothDevice() {\r\n        // 이미 페어링 되어있는 블루투스 기기를 찾습니다.\r\n        devices = bluetoothAdapter.getBondedDevices();\r\n        // 페어링 된 디바이스의 크기를 저장\r\n        int pariedDeviceCount = devices.size();\r\n        // 페어링 되어있는 장치가 없는 경우\r\n        if (pariedDeviceCount == 0) {\r\n            // 페어링을 하기위한 함수 호출\r\n            setBluetooth(\"기기를 먼저 연결해주세요.\");\r\n        } else {\r\n            Intent service = new Intent(MainActivity.this, MyBTService.class);\r\n            startForegroundService(service);\r\n        }\r\n    }\r\n\r\n    public void setBluetooth(String bluetoothMessage) {\r\n        // 디바이스를 선택하기 위한 다이얼로그 생성\r\n        AlertDialog.Builder builder = new AlertDialog.Builder(this);\r\n        builder.setMessage(bluetoothMessage)        // 제목 설정\r\n                .setCancelable(false)        // 뒤로 버튼 클릭시 취소 가능 설정\r\n                .setPositiveButton(\"확인\", new DialogInterface.OnClickListener() {\r\n                    // 확인 버튼 클릭시 설정\r\n                    public void onClick(DialogInterface dialog, int whichButton) {\r\n                        Intent intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);\r\n                        startActivityForResult(intent, 0);\r\n                    }\r\n                })\r\n                .setNegativeButton(\"앱 종료\", new DialogInterface.OnClickListener() {\r\n                    public void onClick(DialogInterface dialog, int whichButton) {\r\n                        finish();\r\n                    }\r\n                });\r\n        AlertDialog dialog = builder.create();    // 알림창 객체 생성\r\n        dialog.show();    // 알림창 띄우기\r\n    }\r\n\r\n    public void setInitData(String today){\r\n        int stepCnt = 0;\r\n        db = dbHelper.getReadableDatabase();\r\n        Cursor cursor = db.rawQuery(\"SELECT stepcnt FROM steptable WHERE writedate LIKE '\"+today+\"%'\", null);\r\n        while (cursor.moveToNext()){\r\n            int step = cursor.getInt(0);\r\n            stepCnt += step;\r\n        }\r\n        PreferenceManager.setInt(this, \"run_step\", 0);\r\n        PreferenceManager.setInt(this, \"walk_step\", stepCnt);\r\n        PreferenceManager.setInt(this, \"rest_time\", 0);\r\n        db.close();\r\n    }\r\n\r\n    public void sendServer(String yesterday){\r\n        db = dbHelper.getReadableDatabase();\r\n        int waterCnt = 0, stepCnt = 0, tempCnt = 0;\r\n        float tempValue = 0.00f;\r\n        String email = PreferenceManager.getString(this, \"userEmail\");\r\n\r\n        Cursor cursor = db.rawQuery(\"SELECT stepcnt FROM steptable WHERE writedate LIKE '\"+yesterday+\"%'\", null);\r\n        while (cursor.moveToNext()){\r\n            int step = cursor.getInt(0);\r\n            stepCnt += step;\r\n        }\r\n        cursor = db.rawQuery(\"SELECT tempvalue FROM temptable WHERE writedate LIKE '\"+yesterday+\"%'\", null);\r\n        while (cursor.moveToNext()){\r\n            float temp = cursor.getFloat(0);\r\n            tempCnt++;\r\n            tempValue += temp;\r\n        }\r\n        db.close();\r\n\r\n        tempValue = tempValue / tempCnt;\r\n        waterCnt = PreferenceManager.getInt(this, \"water_count\");\r\n        DataRequest dataRequest = new DataRequest(yesterday, waterCnt, stepCnt, tempValue, email, responseListener);\r\n        RequestQueue queue = Volley.newRequestQueue(MainActivity.this);\r\n        queue.add(dataRequest);\r\n    }\r\n\r\n    Response.Listener<String> responseListener = new Response.Listener<String>() {\r\n        @Override\r\n        public void onResponse(String response) {\r\n            try {\r\n                JSONObject jsonObject = new JSONObject(response);\r\n                Log.d(\"Data Result\", response);\r\n                boolean success = jsonObject.getBoolean(\"success\");\r\n\r\n                if (success) {\r\n                    Log.d(\"서버 전송\",\"성공\");\r\n\r\n                } else {\r\n                    Log.d(\"서버 전송\",\"실패\");\r\n                }\r\n            } catch (JSONException e) {\r\n                e.printStackTrace();\r\n                androidx.appcompat.app.AlertDialog builder = new androidx.appcompat.app.AlertDialog.Builder(MainActivity.this)\r\n                        .setMessage(\"404 BAD REQUEST\")\r\n                        .setPositiveButton(\"확인\", null)\r\n                        .show();\r\n            }\r\n        }\r\n    };\r\n\r\n    class ItemSelectedListener implements BottomNavigationView.OnNavigationItemSelectedListener {\r\n        @SuppressLint(\"NonConstantResourceId\")\r\n        @Override\r\n        public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {\r\n            FragmentTransaction transaction = fragmentManager.beginTransaction();\r\n            switch (menuItem.getItemId()) {\r\n                case R.id.home:\r\n                    transaction.replace(R.id.frameLayout, fragmentHome).commitAllowingStateLoss();\r\n                    break;\r\n                case R.id.memo:\r\n                    transaction.replace(R.id.frameLayout, fragmentMemo).commitAllowingStateLoss();\r\n                    break;\r\n                case R.id.magazin:\r\n                    transaction.replace(R.id.frameLayout, fragmentMagazin).commitAllowingStateLoss();\r\n                    break;\r\n            }\r\n            return true;\r\n        }\r\n    }\r\n}\r\nclass DataRequest extends StringRequest {\r\n    private final static String URL = \"http://167.179.103.235/setData.php\";\r\n    private Map<String, String> map;\r\n\r\n    public DataRequest(String date, int waterCnt, int stepCnt, float tempValue, String email,  Response.Listener<String> listener) {\r\n        super(Method.POST, URL, listener, null);\r\n        map = new HashMap<>();\r\n        map.put(\"date\", date);\r\n        map.put(\"waterCnt\", String.valueOf(waterCnt));\r\n        map.put(\"stepCnt\", String.valueOf(stepCnt));\r\n        map.put(\"tempValue\", String.valueOf(tempValue));\r\n        map.put(\"email\", email);\r\n    }\r\n\r\n    @Override\r\n    protected Map<String, String> getParams() throws AuthFailureError {\r\n        return map;\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/app_anima/MainActivity.java	(revision 7a763e838a30111da8062a0f1d8cb5e8f1a41852)
++++ app/src/main/java/com/example/app_anima/MainActivity.java	(date 1612291782570)
+@@ -31,12 +31,8 @@
+ import com.android.volley.Response;
+ import com.android.volley.toolbox.StringRequest;
+ import com.android.volley.toolbox.Volley;
+-
+ import com.google.android.material.bottomnavigation.BottomNavigationView;
+ 
+-import org.json.JSONException;
+-import org.json.JSONObject;
+-
+ import java.text.SimpleDateFormat;
+ import java.util.Calendar;
+ import java.util.HashMap;
+@@ -123,6 +119,7 @@
+             setInitData(date);
+             PreferenceManager.setInt(this, "water_count", 0);
+             PreferenceManager.setString(this, "date", date);
++            PreferenceManager.setFloat(this, "food_cal", 0f);
+         }
+     }
+ 
+@@ -234,23 +231,15 @@
+     Response.Listener<String> responseListener = new Response.Listener<String>() {
+         @Override
+         public void onResponse(String response) {
+-            try {
+-                JSONObject jsonObject = new JSONObject(response);
+-                Log.d("Data Result", response);
+-                boolean success = jsonObject.getBoolean("success");
++
++            Log.d("Data Result", response);
++            boolean success = Boolean.parseBoolean(response);
+ 
+-                if (success) {
+-                    Log.d("서버 전송","성공");
++            if (success) {
++                Log.d("서버 전송","성공");
+ 
+-                } else {
+-                    Log.d("서버 전송","실패");
+-                }
+-            } catch (JSONException e) {
+-                e.printStackTrace();
+-                androidx.appcompat.app.AlertDialog builder = new androidx.appcompat.app.AlertDialog.Builder(MainActivity.this)
+-                        .setMessage("404 BAD REQUEST")
+-                        .setPositiveButton("확인", null)
+-                        .show();
++            } else {
++                Log.d("서버 전송","실패");
+             }
+         }
+     };
+Index: app/src/main/java/com/example/app_anima/FragmentHome.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.example.app_anima;\r\n\r\nimport android.annotation.SuppressLint;\r\nimport android.app.AlertDialog;\r\nimport android.content.Intent;\r\nimport android.graphics.Color;\r\nimport android.graphics.drawable.Drawable;\r\nimport android.os.Build;\r\nimport android.os.Bundle;\r\nimport android.os.Handler;\r\nimport android.view.Gravity;\r\nimport android.view.LayoutInflater;\r\nimport android.view.View;\r\nimport android.view.View.OnClickListener;\r\nimport android.view.ViewGroup;\r\nimport android.view.ViewTreeObserver;\r\nimport android.widget.AdapterView;\r\nimport android.widget.ArrayAdapter;\r\nimport android.widget.Button;\r\nimport android.widget.EditText;\r\nimport android.widget.ImageButton;\r\nimport android.widget.ImageView;\r\nimport android.widget.LinearLayout;\r\nimport android.widget.ListView;\r\nimport android.widget.RadioButton;\r\nimport android.widget.RadioGroup;\r\nimport android.widget.ScrollView;\r\nimport android.widget.TextView;\r\n\r\nimport androidx.annotation.IdRes;\r\nimport androidx.annotation.NonNull;\r\nimport androidx.annotation.Nullable;\r\nimport androidx.annotation.RequiresApi;\r\nimport androidx.constraintlayout.widget.ConstraintLayout;\r\nimport androidx.core.content.res.ResourcesCompat;\r\nimport androidx.drawerlayout.widget.DrawerLayout;\r\nimport androidx.fragment.app.Fragment;\r\nimport androidx.viewpager.widget.ViewPager;\r\n\r\nimport com.bumptech.glide.Glide;\r\nimport com.dinuscxj.progressbar.CircleProgressBar;\r\n\r\nimport java.util.ArrayList;\r\nimport java.util.Objects;\r\nimport java.util.Timer;\r\nimport java.util.TimerTask;\r\n\r\npublic class FragmentHome extends Fragment {\r\n\r\n    private TextView tv_calorie, tv_menu, tv_water, tv_temp, tv_bpm, tv_go_jog, tv_run_step, tv_walk_step, tv_rest_time, tv_email, tv_weight;\r\n    private ImageView imageViewProfile;\r\n    private ListView listView;\r\n    private ScrollView scrollView;\r\n\r\n    private LinearLayout appbar, vp_layout, parent_layout;\r\n    private ConstraintLayout dog_running_time;\r\n    private DrawerLayout drawer_ad;\r\n\r\n    private ImageButton btn_menu, btn_feedinput, circle_add, circle_minus, btn_weight;\r\n\r\n    private final View[] dogContent = new View[8];\r\n    private final String[] dogContentID = {\"running_time\", \"food\", \"sleep\", \"weight\", \"heart\", \"stress\", \"water\", \"body_temperature\"};\r\n    private final long DELAY_MS = 500;\r\n    private final long PERIOD_MS = 3000;\r\n    private final int JOG_GOAL = 1000;\r\n\r\n    private ArrayList<Drawable> mList;\r\n    private ADScrollAdapter adScrollAdapter;\r\n    private CircleProgressBar circleProgressBar;\r\n    private ViewPager viewPager;\r\n    private Timer timer;\r\n\r\n    private boolean load = false;\r\n    private int water_count, walk_step, run_step;\r\n    private String txt_go_jog;\r\n\r\n\r\n    @RequiresApi(api = Build.VERSION_CODES.KITKAT)\r\n    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {\r\n        final ViewGroup viewGroup = (ViewGroup) inflater.inflate(R.layout.fragment_home, container, false);\r\n        String packName = Objects.requireNonNull(this.getActivity()).getPackageName();\r\n\r\n        tv_calorie = viewGroup.findViewById(R.id.calory);\r\n        tv_menu = viewGroup.findViewById(R.id.tv_menu);\r\n        tv_water = viewGroup.findViewById(R.id.tv_water);\r\n        tv_temp = viewGroup.findViewById(R.id.tv_temp);\r\n        tv_bpm = viewGroup.findViewById(R.id.tv_bpm);\r\n        tv_go_jog = viewGroup.findViewById(R.id.go_jog);\r\n        tv_run_step = viewGroup.findViewById(R.id.tv_run_step);\r\n        tv_walk_step = viewGroup.findViewById(R.id.tv_walk_step);\r\n        tv_rest_time = viewGroup.findViewById(R.id.tv_rest_time);\r\n        tv_weight = viewGroup.findViewById(R.id.tv_kg);\r\n\r\n        tv_email = viewGroup.findViewById(R.id.tv_email);\r\n        imageViewProfile = viewGroup.findViewById(R.id.profile_image);\r\n        listView = viewGroup.findViewById(R.id.drawer_menulist);\r\n        scrollView = viewGroup.findViewById(R.id.sv_main);\r\n\r\n        appbar = viewGroup.findViewById(R.id.appbar);\r\n        vp_layout = viewGroup.findViewById(R.id.vp_layout);\r\n        parent_layout = viewGroup.findViewById(R.id.parent_layout);\r\n        dog_running_time = viewGroup.findViewById(R.id.dog_running_time);\r\n        drawer_ad = viewGroup.findViewById(R.id.drawer);\r\n\r\n        btn_feedinput = viewGroup.findViewById(R.id.btn_feedinput);\r\n        btn_menu = viewGroup.findViewById(R.id.btn_menu);\r\n        circle_add = viewGroup.findViewById(R.id.circle_add);\r\n        circle_minus = viewGroup.findViewById(R.id.circle_minus);\r\n        btn_weight = viewGroup.findViewById(R.id.btn_weight);\r\n\r\n        viewPager = viewGroup.findViewById(R.id.viewPager);\r\n        circleProgressBar = viewGroup.findViewById(R.id.cpb_circlebar);\r\n\r\n        tv_email.setText(PreferenceManager.getString(getContext(), \"userEmail\"));\r\n\r\n        String imgpath = PreferenceManager.getString(getContext(), \"profileImg\");\r\n        if (imgpath.equals(\"http://167.179.103.235/null\")) {\r\n            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {\r\n                imageViewProfile.setImageDrawable(getActivity().getDrawable(R.drawable.ic_profile));\r\n            }\r\n        } else {\r\n            Glide.with(this).load(imgpath).into(imageViewProfile);\r\n        }\r\n\r\n        for (int i = 0; i < dogContentID.length; i++) {\r\n            String name = \"dog_\" + dogContentID[i];\r\n            int id = getResources().getIdentifier(name, \"id\", packName);\r\n            dogContent[i] = viewGroup.findViewById(id);\r\n        }\r\n\r\n        /*Initial Setting*/\r\n        settingData();\r\n\r\n        circle_add.setOnClickListener(new OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                water_count += 100;\r\n                tv_water.setText(Integer.toString(water_count));\r\n                PreferenceManager.setInt(getContext(), \"water_count\", water_count);\r\n            }\r\n        });\r\n        circle_minus.setOnClickListener(new OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                if (water_count != 0) {\r\n                    water_count -= 100;\r\n                    tv_water.setText(Integer.toString(water_count));\r\n                    PreferenceManager.setInt(getContext(), \"water_count\", water_count);\r\n                } else {\r\n                    tv_water.setText(\"0\");\r\n                    PreferenceManager.setInt(getContext(), \"water_count\", 0);\r\n                }\r\n            }\r\n        });\r\n\r\n        //drawer 리스트 뷰\r\n        final String[] items = {\"회원정보\", \"로그아웃\"};\r\n        ArrayAdapter adapter = new ArrayAdapter(getContext(), android.R.layout.simple_list_item_1, items);\r\n        listView.setAdapter(adapter);\r\n        listView.setOnItemClickListener(new ListView.OnItemClickListener() {\r\n            @SuppressLint(\"RtlHardcoded\")\r\n            @Override\r\n            public void onItemClick(AdapterView parent, View v, int position, long id) {\r\n                switch (position) {\r\n                    case 0:\r\n                        Intent userinfo = new Intent(getContext(), UserInfoActivity.class);\r\n                        startActivity(userinfo);\r\n                        break;\r\n                    case 1:\r\n                        Intent logout = new Intent(getContext(), LoginActivity.class);\r\n                        startActivity(logout);\r\n                        PreferenceManager.clear(getContext());\r\n                        getActivity().finish();\r\n                        break;\r\n                }\r\n                // close drawer.\r\n                DrawerLayout drawer = viewGroup.findViewById(R.id.drawer);\r\n                drawer.closeDrawer(Gravity.LEFT);\r\n            }\r\n        });\r\n\r\n        //drawer\r\n        btn_menu.setOnClickListener(new OnClickListener() {\r\n            @SuppressLint(\"RtlHardcoded\")\r\n            @Override\r\n            public void onClick(View v) {\r\n                if (!drawer_ad.isDrawerOpen(Gravity.LEFT)) {\r\n                    drawer_ad.openDrawer(Gravity.LEFT);\r\n                }\r\n                if (drawer_ad.isDrawerOpen(Gravity.LEFT)) {\r\n                    drawer_ad.closeDrawer(Gravity.LEFT);\r\n                }\r\n            }\r\n        });\r\n\r\n        //광고창\r\n        mList = new ArrayList<>();\r\n        mList.add(ResourcesCompat.getDrawable(getResources(), R.drawable.img_ad1, null));\r\n        mList.add(ResourcesCompat.getDrawable(getResources(), R.drawable.img_ad2, null));\r\n        mList.add(ResourcesCompat.getDrawable(getResources(), R.drawable.img_ad3, null));\r\n        mList.add(ResourcesCompat.getDrawable(getResources(), R.drawable.img_ad4, null));\r\n        adScrollAdapter = new ADScrollAdapter(getContext(), mList);\r\n        viewPager.setAdapter(adScrollAdapter);\r\n\r\n        final Handler handler = new Handler();\r\n        final Runnable Update = new Runnable() {\r\n            @Override\r\n            public void run() {\r\n                if (load) {\r\n                    if (viewPager.getCurrentItem() == adScrollAdapter.getCount() - 1) {\r\n                        viewPager.setCurrentItem(0, true);\r\n                    } else {\r\n                        viewPager.setCurrentItem(viewPager.getCurrentItem() + 1, true);\r\n                    }\r\n                } else {\r\n                    load = true;\r\n                    viewPager.setCurrentItem(0, true);\r\n                }\r\n            }\r\n\r\n        };\r\n        timer = new Timer();\r\n        timer.schedule(new TimerTask() {\r\n            @Override\r\n            public void run() {\r\n                handler.post(Update);\r\n            }\r\n\r\n        }, DELAY_MS, PERIOD_MS);\r\n\r\n\r\n        scrollView.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {\r\n            @Override\r\n            public void onScrollChanged() {\r\n                int scrollY = scrollView.getScrollY(); // For ScrollView\r\n                if (scrollY >= vp_layout.getBottom()) {\r\n                    appbar.setBackgroundColor(Color.parseColor(\"#E7D0C8\"));\r\n                    tv_menu.setVisibility(View.VISIBLE);\r\n                    btn_menu.setColorFilter(Color.parseColor(\"#000000\"));\r\n                } else {\r\n                    appbar.setBackgroundColor(Color.parseColor(\"#00E7D0C8\"));\r\n                    tv_menu.setVisibility(View.INVISIBLE);\r\n                    btn_menu.setColorFilter(Color.parseColor(\"#FFFFFF\"));\r\n                }\r\n            }\r\n        });\r\n\r\n        //사료\r\n        btn_feedinput.setOnClickListener(new OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                final double curCal;\r\n                if (tv_calorie.getText().toString().equals(\"\")) {\r\n                    curCal = 0;\r\n                } else {\r\n                    curCal = Double.parseDouble(tv_calorie.getText().toString());\r\n                }\r\n                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());\r\n\r\n                View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_food, null, false);\r\n                builder.setView(view);\r\n\r\n                final RadioGroup mRadioGroup;\r\n                final RadioButton radioButtonFood, radioButtonSnack;\r\n                final EditText editTextInputFeed;\r\n                final Button btnPlus100, btnPlus10, btnPlus1, btnMinus100, btnMinus10, btnMinus1;\r\n                final EditText editTextInputCal;\r\n                final Button btnApply, btnCancel;\r\n                final boolean isFood;\r\n\r\n                mRadioGroup = view.findViewById(R.id.radiocategory);\r\n                radioButtonFood = view.findViewById(R.id.radiofood);\r\n                radioButtonSnack = view.findViewById(R.id.radiosnack);\r\n                editTextInputFeed = view.findViewById(R.id.input_feed);\r\n                btnPlus100 = view.findViewById(R.id.btn_plus100);\r\n                btnPlus10 = view.findViewById(R.id.btn_plus10);\r\n                btnPlus1 = view.findViewById(R.id.btn_plus1);\r\n                btnMinus100 = view.findViewById(R.id.btn_minus100);\r\n                btnMinus10 = view.findViewById(R.id.btn_minus10);\r\n                btnMinus1 = view.findViewById(R.id.btn_minus1);\r\n                editTextInputCal = view.findViewById(R.id.input_calorie);\r\n                btnApply = view.findViewById(R.id.btn_apply);\r\n                btnCancel = view.findViewById(R.id.btn_cancel);\r\n\r\n                RadioGroup.OnCheckedChangeListener radioGroupButtonChangeListener = new RadioGroup.OnCheckedChangeListener() {\r\n                    @Override\r\n                    public void onCheckedChanged(RadioGroup group, @IdRes int checkedId) {\r\n\r\n                    }\r\n                };\r\n                mRadioGroup.setOnCheckedChangeListener(radioGroupButtonChangeListener);\r\n                radioButtonFood.setChecked(true);\r\n\r\n                final AlertDialog alertDialog = builder.create();\r\n                alertDialog.show();\r\n\r\n                btnPlus100.setOnClickListener(new OnClickListener() {\r\n                    @Override\r\n                    public void onClick(View v) {\r\n                        Double curInputFeed = Double.parseDouble(editTextInputFeed.getText().toString());\r\n                        curInputFeed += 100;\r\n                        editTextInputFeed.setText(String.valueOf(curInputFeed));\r\n                    }\r\n                });\r\n                btnPlus10.setOnClickListener(new OnClickListener() {\r\n                    @Override\r\n                    public void onClick(View v) {\r\n                        Double curInputFeed = Double.parseDouble(editTextInputFeed.getText().toString());\r\n                        curInputFeed += 10;\r\n                        editTextInputFeed.setText(String.valueOf(curInputFeed));\r\n                    }\r\n                });\r\n                btnPlus1.setOnClickListener(new OnClickListener() {\r\n                    @Override\r\n                    public void onClick(View v) {\r\n                        Double curInputFeed = Double.parseDouble(editTextInputFeed.getText().toString());\r\n                        curInputFeed += 1;\r\n                        editTextInputFeed.setText(String.valueOf(curInputFeed));\r\n                    }\r\n                });\r\n                btnMinus100.setOnClickListener(new OnClickListener() {\r\n                    @Override\r\n                    public void onClick(View v) {\r\n                        Double curInputFeed = Double.parseDouble(editTextInputFeed.getText().toString());\r\n                        curInputFeed -= 100;\r\n                        editTextInputFeed.setText(String.valueOf(curInputFeed));\r\n                    }\r\n                });\r\n                btnMinus10.setOnClickListener(new OnClickListener() {\r\n                    @Override\r\n                    public void onClick(View v) {\r\n                        Double curInputFeed = Double.parseDouble(editTextInputFeed.getText().toString());\r\n                        curInputFeed -= 10;\r\n                        editTextInputFeed.setText(String.valueOf(curInputFeed));\r\n                    }\r\n                });\r\n                btnMinus1.setOnClickListener(new OnClickListener() {\r\n                    @Override\r\n                    public void onClick(View v) {\r\n                        Double curInputFeed = Double.parseDouble(editTextInputFeed.getText().toString());\r\n                        curInputFeed -= 1;\r\n                        editTextInputFeed.setText(String.valueOf(curInputFeed));\r\n                    }\r\n                });\r\n\r\n                btnCancel.setOnClickListener(new OnClickListener() {\r\n                    @Override\r\n                    public void onClick(View v) {\r\n                        alertDialog.dismiss();\r\n                    }\r\n                });\r\n\r\n                btnApply.setOnClickListener(new OnClickListener() {\r\n                    @Override\r\n                    public void onClick(View v) {\r\n                        int checkedRadio = mRadioGroup.getCheckedRadioButtonId();\r\n                        double inputCalorie = Double.parseDouble(editTextInputCal.getText().toString());\r\n                        double calculatedCalorie = inputCalorie / 100;\r\n                        double inputFeed = Double.parseDouble(editTextInputFeed.getText().toString());\r\n                        double finalFeed = inputFeed * calculatedCalorie;\r\n                        tv_calorie.setText(String.format(\"%.2f\", finalFeed + curCal));\r\n                        alertDialog.dismiss();\r\n                    }\r\n                });\r\n            }\r\n        });\r\n\r\n        btn_weight.setOnClickListener(new OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());\r\n                View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_weight, null, false);\r\n                builder.setView(view);\r\n\r\n                final EditText editTextWeight = view.findViewById(R.id.et_weight);\r\n                Button btnApply = view.findViewById(R.id.btn_apply);\r\n                Button btnCancel = view.findViewById(R.id.btn_cancel);\r\n\r\n                final AlertDialog alertDialog = builder.create();\r\n                alertDialog.show();\r\n\r\n                btnApply.setOnClickListener(new OnClickListener() {\r\n                    @Override\r\n                    public void onClick(View view) {\r\n                        String weight = editTextWeight.getText().toString();\r\n                        if (weight.equals(\"\")) {\r\n                            AlertDialog builder = new AlertDialog.Builder(getContext())\r\n                                    .setMessage(\"체중을 입력하세요.\")\r\n                                    .setPositiveButton(\"확인\", null)\r\n                                    .show();\r\n                        } else {\r\n                            tv_weight.setText(weight);\r\n                        }\r\n                        alertDialog.dismiss();\r\n                    }\r\n                });\r\n\r\n                btnCancel.setOnClickListener(new OnClickListener() {\r\n                    @Override\r\n                    public void onClick(View view) {\r\n                        alertDialog.dismiss();\r\n                    }\r\n                });\r\n            }\r\n        });\r\n\r\n\r\n        return viewGroup;\r\n    }\r\n\r\n    @Override\r\n    public void onPause() {\r\n        super.onPause();\r\n        timer.cancel();\r\n    }\r\n\r\n    public void settingData() {\r\n        String rest_time;\r\n        int h, m, s;\r\n        int rest_data = PreferenceManager.getInt(getActivity(), \"rest_time\");\r\n        h = rest_data / 3600;\r\n        m = (rest_data % 3600) / 60;\r\n        s = (rest_data % 3600) % 60;\r\n        rest_time = h + \"시간\" + m + \"분\" + s + \"초\";\r\n\r\n        water_count = PreferenceManager.getInt(getContext(), \"water_count\");\r\n        run_step = PreferenceManager.getInt(getContext(), \"run_step\");\r\n        walk_step = PreferenceManager.getInt(getContext(), \"walk_step\");\r\n\r\n        tv_water.setText(Integer.toString(water_count));\r\n        tv_temp.setText(String.valueOf(PreferenceManager.getFloat(getContext(), \"Temperature\")));\r\n        tv_bpm.setText(PreferenceManager.getString(getContext(), \"bpm\"));\r\n        tv_rest_time.setText(rest_time);\r\n\r\n        if ((run_step + walk_step) > 1) {\r\n            txt_go_jog = (run_step + walk_step) + \"/\" + JOG_GOAL + \"걸음\";\r\n            tv_go_jog.setText(txt_go_jog);\r\n            circleProgressBar.setProgress((run_step + walk_step) * 100 / JOG_GOAL);\r\n            dog_running_time.setVisibility(View.VISIBLE);\r\n            int sumStep = run_step + walk_step;\r\n            int run_percent = run_step * 100 / sumStep;\r\n            int walk_percent = 100 - run_percent;\r\n            String run_text = run_percent + \"%\";\r\n            String walk_text = walk_percent + \"%\";\r\n            LinearLayout.LayoutParams param_run = (LinearLayout.LayoutParams) tv_run_step.getLayoutParams();\r\n            LinearLayout.LayoutParams param_walk = (LinearLayout.LayoutParams) tv_walk_step.getLayoutParams();\r\n            if (walk_percent > 25 && run_percent > 25) {\r\n                tv_run_step.setText(run_text);\r\n                tv_walk_step.setText(walk_text);\r\n            } else if (walk_percent < run_percent) {\r\n                tv_run_step.setText(run_text);\r\n                tv_walk_step.setText(\" \");\r\n            } else {\r\n                tv_run_step.setText(\" \");\r\n                tv_walk_step.setText(walk_text);\r\n            }\r\n            param_run.weight = run_percent;\r\n            param_walk.weight = walk_percent;\r\n            tv_run_step.setLayoutParams(param_run);\r\n            tv_walk_step.setLayoutParams(param_walk);\r\n        } else {\r\n            dog_running_time.setVisibility(View.GONE);\r\n        }\r\n\r\n\r\n    }\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/app_anima/FragmentHome.java	(revision 7a763e838a30111da8062a0f1d8cb5e8f1a41852)
++++ app/src/main/java/com/example/app_anima/FragmentHome.java	(date 1612292726440)
+@@ -8,6 +8,7 @@
+ import android.os.Build;
+ import android.os.Bundle;
+ import android.os.Handler;
++import android.util.Log;
+ import android.view.Gravity;
+ import android.view.LayoutInflater;
+ import android.view.View;
+@@ -23,11 +24,9 @@
+ import android.widget.LinearLayout;
+ import android.widget.ListView;
+ import android.widget.RadioButton;
+-import android.widget.RadioGroup;
+ import android.widget.ScrollView;
+ import android.widget.TextView;
+ 
+-import androidx.annotation.IdRes;
+ import androidx.annotation.NonNull;
+ import androidx.annotation.Nullable;
+ import androidx.annotation.RequiresApi;
+@@ -37,10 +36,17 @@
+ import androidx.fragment.app.Fragment;
+ import androidx.viewpager.widget.ViewPager;
+ 
++import com.android.volley.AuthFailureError;
++import com.android.volley.RequestQueue;
++import com.android.volley.Response;
++import com.android.volley.toolbox.StringRequest;
++import com.android.volley.toolbox.Volley;
+ import com.bumptech.glide.Glide;
+ import com.dinuscxj.progressbar.CircleProgressBar;
+ 
+ import java.util.ArrayList;
++import java.util.HashMap;
++import java.util.Map;
+ import java.util.Objects;
+ import java.util.Timer;
+ import java.util.TimerTask;
+@@ -73,6 +79,7 @@
+     private boolean load = false;
+     private int water_count, walk_step, run_step;
+     private String txt_go_jog;
++    private double curCal;
+ 
+ 
+     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+@@ -128,6 +135,9 @@
+             dogContent[i] = viewGroup.findViewById(id);
+         }
+ 
++        curCal = PreferenceManager.getFloat(getContext(), "food_cal");
++        tv_calorie.setText(String.format("%.2f", curCal));
++
+         /*Initial Setting*/
+         settingData();
+ 
+@@ -249,28 +259,19 @@
+         btn_feedinput.setOnClickListener(new OnClickListener() {
+             @Override
+             public void onClick(View v) {
+-                final double curCal;
+-                if (tv_calorie.getText().toString().equals("")) {
+-                    curCal = 0;
+-                } else {
+-                    curCal = Double.parseDouble(tv_calorie.getText().toString());
+-                }
+                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+ 
+                 View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_food, null, false);
+                 builder.setView(view);
+ 
+-                final RadioGroup mRadioGroup;
+-                final RadioButton radioButtonFood, radioButtonSnack;
++                final RadioButton radioButtonFood;
+                 final EditText editTextInputFeed;
+                 final Button btnPlus100, btnPlus10, btnPlus1, btnMinus100, btnMinus10, btnMinus1;
+                 final EditText editTextInputCal;
+                 final Button btnApply, btnCancel;
+                 final boolean isFood;
+ 
+-                mRadioGroup = view.findViewById(R.id.radiocategory);
+                 radioButtonFood = view.findViewById(R.id.radiofood);
+-                radioButtonSnack = view.findViewById(R.id.radiosnack);
+                 editTextInputFeed = view.findViewById(R.id.input_feed);
+                 btnPlus100 = view.findViewById(R.id.btn_plus100);
+                 btnPlus10 = view.findViewById(R.id.btn_plus10);
+@@ -282,13 +283,6 @@
+                 btnApply = view.findViewById(R.id.btn_apply);
+                 btnCancel = view.findViewById(R.id.btn_cancel);
+ 
+-                RadioGroup.OnCheckedChangeListener radioGroupButtonChangeListener = new RadioGroup.OnCheckedChangeListener() {
+-                    @Override
+-                    public void onCheckedChanged(RadioGroup group, @IdRes int checkedId) {
+-
+-                    }
+-                };
+-                mRadioGroup.setOnCheckedChangeListener(radioGroupButtonChangeListener);
+                 radioButtonFood.setChecked(true);
+ 
+                 final AlertDialog alertDialog = builder.create();
+@@ -353,12 +347,21 @@
+                 btnApply.setOnClickListener(new OnClickListener() {
+                     @Override
+                     public void onClick(View v) {
+-                        int checkedRadio = mRadioGroup.getCheckedRadioButtonId();
++                        int foodType;
++                        if (radioButtonFood.isChecked()) foodType = 0;
++                        else foodType = 1;
+                         double inputCalorie = Double.parseDouble(editTextInputCal.getText().toString());
+                         double calculatedCalorie = inputCalorie / 100;
+                         double inputFeed = Double.parseDouble(editTextInputFeed.getText().toString());
+                         double finalFeed = inputFeed * calculatedCalorie;
+-                        tv_calorie.setText(String.format("%.2f", finalFeed + curCal));
++                        curCal = finalFeed + curCal;
++                        tv_calorie.setText(String.format("%.2f", curCal));
++                        String email = PreferenceManager.getString(getContext(), "userEmail");
++                        String today = PreferenceManager.getString(getContext(), "date");
++                        FoodRequest foodRequest = new FoodRequest(foodType, finalFeed, email, today, foodResponseListener);
++                        RequestQueue queue = Volley.newRequestQueue(getContext());
++                        queue.add(foodRequest);
++                        PreferenceManager.setFloat(getContext(), "food_cal", (float) curCal);
+                         alertDialog.dismiss();
+                     }
+                 });
+@@ -403,11 +406,23 @@
+                 });
+             }
+         });
+-
+-
+         return viewGroup;
+     }
+ 
++    Response.Listener<String> foodResponseListener = new Response.Listener<String>() {
++        @Override
++        public void onResponse(String response) {
++            Log.d("FoodData Result", response);
++            boolean success = Boolean.parseBoolean(response);
++            if (success) {
++                Log.d("서버 전송","성공");
++
++            } else {
++                Log.d("서버 전송","실패");
++            }
++        }
++    };
++
+     @Override
+     public void onPause() {
+         super.onPause();
+@@ -461,7 +476,24 @@
+         } else {
+             dog_running_time.setVisibility(View.GONE);
+         }
++    }
++}
+ 
++class FoodRequest extends StringRequest {
++    private final static String URL = "http://167.179.103.235/setFood.php";
++    private Map<String, String> map;
+ 
++    public FoodRequest(int foodType, double kcal, String email, String today, Response.Listener<String> listener) {
++        super(Method.POST, URL, listener, null);
++        map = new HashMap<>();
++        map.put("foodType", String.valueOf(foodType));
++        map.put("kcal", String.valueOf(kcal));
++        map.put("email", email);
++        map.put("today",today);
+     }
+-}
++
++    @Override
++    protected Map<String, String> getParams() throws AuthFailureError {
++        return map;
++    }
++}
+\ No newline at end of file
+Index: app/src/main/res/layout/fragment_memo.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<androidx.constraintlayout.widget.ConstraintLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"\r\n    xmlns:app=\"http://schemas.android.com/apk/res-auto\"\r\n    android:layout_width=\"match_parent\"\r\n    android:layout_height=\"match_parent\"\r\n    android:background=\"#E7D0C8\">\r\n\r\n    <TextView\r\n        android:id=\"@+id/tv_trainingcontent\"\r\n        android:layout_width=\"wrap_content\"\r\n        android:layout_height=\"wrap_content\"\r\n        android:layout_marginTop=\"24dp\"\r\n        android:layout_marginBottom=\"10dp\"\r\n        android:clickable=\"true\"\r\n        android:fontFamily=\"@font/tttogether\"\r\n        android:text=\"ANIMA HEALTH\"\r\n        android:textColor=\"#CCA697\"\r\n        android:textSize=\"20dp\"\r\n        app:layout_constraintEnd_toEndOf=\"parent\"\r\n        app:layout_constraintHorizontal_bias=\"0.127\"\r\n        app:layout_constraintStart_toStartOf=\"parent\"\r\n        app:layout_constraintTop_toTopOf=\"parent\" />\r\n\r\n    <ScrollView\r\n        android:id=\"@+id/sv_memo\"\r\n        android:layout_width=\"0dp\"\r\n        android:layout_height=\"wrap_content\"\r\n        android:layout_marginTop=\"36dp\"\r\n        app:layout_constraintEnd_toEndOf=\"parent\"\r\n        app:layout_constraintHorizontal_bias=\"0.0\"\r\n        app:layout_constraintStart_toStartOf=\"parent\"\r\n        app:layout_constraintTop_toBottomOf=\"@+id/tv_trainingcontent\">\r\n\r\n        <LinearLayout\r\n            android:layout_width=\"match_parent\"\r\n            android:layout_height=\"wrap_content\"\r\n            android:layout_marginTop=\"0dp\"\r\n            android:orientation=\"vertical\"\r\n            android:paddingBottom=\"100dp\">\r\n\r\n            <LinearLayout\r\n                android:id=\"@+id/linearLayout\"\r\n                android:layout_width=\"match_parent\"\r\n                android:layout_height=\"500dp\"\r\n                android:layout_margin=\"20dp\"\r\n                android:layout_marginTop=\"32dp\"\r\n                android:background=\"@drawable/box_large\"\r\n                android:orientation=\"vertical\">\r\n\r\n                <TableLayout\r\n                    android:layout_width=\"match_parent\"\r\n                    android:layout_height=\"50dp\"\r\n                    android:layout_margin=\"20dp\"\r\n                    android:background=\"@drawable/box_darkpink\">\r\n\r\n                    <TableRow>\r\n\r\n                        <Button\r\n                            android:id=\"@+id/btn_day\"\r\n                            android:layout_width=\"0dp\"\r\n                            android:layout_height=\"match_parent\"\r\n                            android:layout_margin=\"11dp\"\r\n                            android:layout_weight=\"1\"\r\n                            android:background=\"@drawable/box_regular\"\r\n                            android:fontFamily=\"@font/recipekorea\"\r\n                            android:padding=\"3dp\"\r\n                            android:text=\"일\"\r\n                            android:textColor=\"#565656\"\r\n                            android:textSize=\"20dp\"/>\r\n\r\n                        <Button\r\n                            android:id=\"@+id/btn_week\"\r\n                            android:layout_width=\"0dp\"\r\n                            android:layout_height=\"match_parent\"\r\n                            android:layout_margin=\"11dp\"\r\n                            android:layout_weight=\"1\"\r\n                            android:background=\"@drawable/box_regular\"\r\n                            android:fontFamily=\"@font/recipekorea\"\r\n                            android:padding=\"3dp\"\r\n                            android:text=\"주\"\r\n                            android:textColor=\"#565656\"\r\n                            android:textSize=\"20dp\"/>\r\n\r\n\r\n                    </TableRow>\r\n                </TableLayout>\r\n\r\n                <androidx.constraintlayout.widget.ConstraintLayout\r\n                    android:layout_width=\"match_parent\"\r\n                    android:layout_height=\"wrap_content\">\r\n\r\n                    <TextView\r\n                        android:id=\"@+id/text\"\r\n                        android:layout_width=\"wrap_content\"\r\n                        android:layout_height=\"wrap_content\"\r\n                        android:layout_marginStart=\"16dp\"\r\n                        android:layout_marginLeft=\"16dp\"\r\n                        android:layout_marginTop=\"4dp\"\r\n                        android:text=\"총\"\r\n                        app:layout_constraintStart_toStartOf=\"parent\"\r\n                        app:layout_constraintTop_toTopOf=\"parent\" />\r\n\r\n                    <LinearLayout\r\n                        android:layout_width=\"wrap_content\"\r\n                        android:layout_height=\"wrap_content\"\r\n                        android:layout_marginStart=\"16dp\"\r\n                        android:layout_marginLeft=\"16dp\"\r\n                        android:layout_marginTop=\"5dp\"\r\n                        app:layout_constraintBottom_toBottomOf=\"parent\"\r\n                        app:layout_constraintStart_toStartOf=\"parent\"\r\n                        app:layout_constraintTop_toBottomOf=\"@+id/text\">\r\n\r\n                        <TextView\r\n                            android:layout_width=\"wrap_content\"\r\n                            android:layout_height=\"wrap_content\"\r\n                            android:fontFamily=\"@font/recipekorea\"\r\n                            android:text=\"00,000\"\r\n                            android:textColor=\"@color/black\"\r\n                            android:textSize=\"20dp\" />\r\n\r\n                        <TextView\r\n                            android:layout_width=\"wrap_content\"\r\n                            android:layout_height=\"wrap_content\"\r\n                            android:layout_margin=\"3dp\"\r\n                            android:fontFamily=\"@font/recipekorea\"\r\n                            android:text=\"걸음\" />\r\n                    </LinearLayout>\r\n\r\n                    <TextView\r\n                        android:layout_width=\"wrap_content\"\r\n                        android:layout_height=\"wrap_content\"\r\n                        android:layout_marginEnd=\"28dp\"\r\n                        android:layout_marginRight=\"28dp\"\r\n                        android:text=\"오늘\"\r\n                        app:layout_constraintBottom_toBottomOf=\"parent\"\r\n                        app:layout_constraintEnd_toEndOf=\"parent\" />\r\n                </androidx.constraintlayout.widget.ConstraintLayout>\r\n\r\n                <com.github.mikephil.charting.charts.BarChart\r\n                    android:id=\"@+id/barChart\"\r\n                    android:layout_width=\"match_parent\"\r\n                    android:layout_height=\"match_parent\"\r\n                    android:layout_margin=\"20dp\" />\r\n\r\n            </LinearLayout>\r\n\r\n            <LinearLayout\r\n                android:id=\"@+id/linearLayout2\"\r\n                android:layout_width=\"match_parent\"\r\n                android:layout_height=\"400dp\"\r\n                android:layout_margin=\"20dp\"\r\n                android:background=\"@drawable/box_large\"\r\n                android:orientation=\"vertical\">\r\n\r\n                <androidx.constraintlayout.widget.ConstraintLayout\r\n                    android:layout_width=\"match_parent\"\r\n                    android:layout_height=\"wrap_content\"\r\n                    android:layout_margin=\"16dp\"\r\n                    android:layout_marginTop=\"20dp\"\r\n                    android:layout_marginBottom=\"0dp\">\r\n\r\n                    <ImageView\r\n                        android:id=\"@+id/imageView\"\r\n                        android:layout_width=\"wrap_content\"\r\n                        android:layout_height=\"wrap_content\"\r\n                        android:src=\"@drawable/icon_temperature\"\r\n                        app:layout_constraintBottom_toBottomOf=\"parent\"\r\n                        app:layout_constraintEnd_toEndOf=\"parent\"\r\n                        app:layout_constraintHorizontal_bias=\"0.0\"\r\n                        app:layout_constraintStart_toStartOf=\"parent\"\r\n                        app:layout_constraintTop_toTopOf=\"parent\"\r\n                        app:layout_constraintVertical_bias=\"0.0\" />\r\n\r\n                    <TextView\r\n                        android:layout_width=\"wrap_content\"\r\n                        android:layout_height=\"wrap_content\"\r\n                        android:fontFamily=\"@font/nanum_baren_yet\"\r\n                        android:text=\"체온\"\r\n                        android:textSize=\"15dp\"\r\n                        app:layout_constraintBottom_toBottomOf=\"parent\"\r\n                        app:layout_constraintEnd_toEndOf=\"parent\"\r\n                        app:layout_constraintHorizontal_bias=\"0.048\"\r\n                        app:layout_constraintStart_toEndOf=\"@+id/imageView\"\r\n                        app:layout_constraintTop_toTopOf=\"parent\"\r\n                        app:layout_constraintVertical_bias=\"0.529\" />\r\n                </androidx.constraintlayout.widget.ConstraintLayout>\r\n\r\n                <com.github.mikephil.charting.charts.LineChart\r\n                    android:id=\"@+id/lineChart\"\r\n                    android:layout_width=\"match_parent\"\r\n                    android:layout_height=\"match_parent\"\r\n                    android:layout_margin=\"20dp\" />\r\n            </LinearLayout>\r\n\r\n            <LinearLayout\r\n                android:layout_width=\"match_parent\"\r\n                android:layout_height=\"400dp\"\r\n                android:layout_margin=\"20dp\"\r\n                android:background=\"@drawable/box_large\"\r\n                android:orientation=\"vertical\">\r\n\r\n                <androidx.constraintlayout.widget.ConstraintLayout\r\n                    android:layout_width=\"match_parent\"\r\n                    android:layout_height=\"wrap_content\"\r\n                    android:layout_margin=\"16dp\"\r\n                    android:layout_marginTop=\"20dp\"\r\n                    android:layout_marginBottom=\"0dp\">\r\n\r\n                    <ImageView\r\n                        android:id=\"@+id/imageView1\"\r\n                        android:layout_width=\"wrap_content\"\r\n                        android:layout_height=\"wrap_content\"\r\n                        android:src=\"@drawable/icon_fork\"\r\n                        app:layout_constraintBottom_toBottomOf=\"parent\"\r\n                        app:layout_constraintEnd_toEndOf=\"parent\"\r\n                        app:layout_constraintHorizontal_bias=\"0.0\"\r\n                        app:layout_constraintStart_toStartOf=\"parent\"\r\n                        app:layout_constraintTop_toTopOf=\"parent\"\r\n                        app:layout_constraintVertical_bias=\"0.0\" />\r\n\r\n                    <TextView\r\n                        android:layout_width=\"wrap_content\"\r\n                        android:layout_height=\"wrap_content\"\r\n                        android:fontFamily=\"@font/nanum_baren_yet\"\r\n                        android:text=\"사료\"\r\n                        android:textSize=\"15dp\"\r\n                        app:layout_constraintBottom_toBottomOf=\"parent\"\r\n                        app:layout_constraintEnd_toEndOf=\"parent\"\r\n                        app:layout_constraintHorizontal_bias=\"0.048\"\r\n                        app:layout_constraintStart_toEndOf=\"@+id/imageView1\"\r\n                        app:layout_constraintTop_toTopOf=\"parent\"\r\n                        app:layout_constraintVertical_bias=\"0.529\" />\r\n                </androidx.constraintlayout.widget.ConstraintLayout>\r\n            </LinearLayout>\r\n\r\n            <LinearLayout\r\n                android:layout_width=\"match_parent\"\r\n                android:layout_height=\"400dp\"\r\n                android:layout_margin=\"20dp\"\r\n                android:background=\"@drawable/box_large\"\r\n                android:orientation=\"vertical\">\r\n\r\n                <androidx.constraintlayout.widget.ConstraintLayout\r\n                    android:layout_width=\"match_parent\"\r\n                    android:layout_height=\"wrap_content\"\r\n                    android:layout_margin=\"16dp\"\r\n                    android:layout_marginTop=\"20dp\"\r\n                    android:layout_marginBottom=\"0dp\">\r\n\r\n                    <ImageView\r\n                        android:id=\"@+id/imageView2\"\r\n                        android:layout_width=\"wrap_content\"\r\n                        android:layout_height=\"wrap_content\"\r\n                        android:src=\"@drawable/dog_water\"\r\n                        app:layout_constraintBottom_toBottomOf=\"parent\"\r\n                        app:layout_constraintEnd_toEndOf=\"parent\"\r\n                        app:layout_constraintHorizontal_bias=\"0.0\"\r\n                        app:layout_constraintStart_toStartOf=\"parent\"\r\n                        app:layout_constraintTop_toTopOf=\"parent\"\r\n                        app:layout_constraintVertical_bias=\"0.0\" />\r\n\r\n                    <TextView\r\n                        android:layout_width=\"wrap_content\"\r\n                        android:layout_height=\"wrap_content\"\r\n                        android:fontFamily=\"@font/nanum_baren_yet\"\r\n                        android:text=\"물\"\r\n                        android:textSize=\"15dp\"\r\n                        app:layout_constraintBottom_toBottomOf=\"parent\"\r\n                        app:layout_constraintEnd_toEndOf=\"parent\"\r\n                        app:layout_constraintHorizontal_bias=\"0.048\"\r\n                        app:layout_constraintStart_toEndOf=\"@+id/imageView2\"\r\n                        app:layout_constraintTop_toTopOf=\"parent\"\r\n                        app:layout_constraintVertical_bias=\"0.529\" />\r\n                </androidx.constraintlayout.widget.ConstraintLayout>\r\n\r\n                <com.github.mikephil.charting.charts.BarChart\r\n                    android:id=\"@+id/barChartWater\"\r\n                    android:layout_width=\"match_parent\"\r\n                    android:layout_height=\"match_parent\"\r\n                    android:layout_margin=\"20dp\" />\r\n            </LinearLayout>\r\n\r\n        </LinearLayout>\r\n\r\n    </ScrollView>\r\n\r\n</androidx.constraintlayout.widget.ConstraintLayout>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/fragment_memo.xml	(revision 7a763e838a30111da8062a0f1d8cb5e8f1a41852)
++++ app/src/main/res/layout/fragment_memo.xml	(date 1612292517214)
+@@ -231,6 +231,13 @@
+                         app:layout_constraintTop_toTopOf="parent"
+                         app:layout_constraintVertical_bias="0.529" />
+                 </androidx.constraintlayout.widget.ConstraintLayout>
++                <TextView
++                    android:id="@+id/tv_memo_food"
++                    android:layout_width="match_parent"
++                    android:layout_height="match_parent"
++                    android:layout_margin="10dp"
++                    android:fontFamily="@font/nanum_baren_yet"
++                    android:scrollbars="vertical"/>
+             </LinearLayout>
+ 
+             <LinearLayout
