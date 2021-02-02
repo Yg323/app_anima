@@ -120,10 +120,8 @@ public class MainActivity extends AppCompatActivity {
         String yesterday = PreferenceManager.getString(this, "date");
         if (!Objects.equals(yesterday, date)) {
             sendServer(yesterday);
+            setInitData(date);
             PreferenceManager.setInt(this, "water_count", 0);
-            PreferenceManager.setInt(this, "run_step", 0);
-            PreferenceManager.setInt(this, "walk_step", 0);
-            PreferenceManager.setInt(this, "rest_time", 0);
             PreferenceManager.setString(this, "date", date);
         }
     }
@@ -193,6 +191,20 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();    // 알림창 띄우기
     }
 
+    public void setInitData(String today){
+        int stepCnt = 0;
+        db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT stepcnt FROM steptable WHERE writedate LIKE '"+today+"%'", null);
+        while (cursor.moveToNext()){
+            int step = cursor.getInt(0);
+            stepCnt += step;
+        }
+        PreferenceManager.setInt(this, "run_step", 0);
+        PreferenceManager.setInt(this, "walk_step", stepCnt);
+        PreferenceManager.setInt(this, "rest_time", 0);
+        db.close();
+    }
+
     public void sendServer(String yesterday){
         db = dbHelper.getReadableDatabase();
         int waterCnt = 0, stepCnt = 0, tempCnt = 0;
@@ -218,8 +230,6 @@ public class MainActivity extends AppCompatActivity {
         RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
         queue.add(dataRequest);
     }
-
-
 
     Response.Listener<String> responseListener = new Response.Listener<String>() {
         @Override
