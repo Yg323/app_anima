@@ -143,7 +143,7 @@ public class FindPasswordActivity extends AppCompatActivity {
                 boolean success = Boolean.parseBoolean(response);
 
                 if (success) {
-                    Toast.makeText(FindPasswordActivity.this, "비밀번호 변경 완료", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(FindPasswordActivity.this, "비밀번호 초기화 완료", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(FindPasswordActivity.this, LoginActivity.class);
                     startActivity(intent);
                     finish();
