@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,6 +27,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
@@ -40,10 +42,19 @@ import androidx.viewpager.widget.ViewPager;
 import com.bumptech.glide.Glide;
 import com.dinuscxj.progressbar.CircleProgressBar;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class FragmentHome extends Fragment {
 
@@ -365,6 +376,12 @@ public class FragmentHome extends Fragment {
             }
         });
 
+        String weight = PreferenceManager.getString(getContext(), "petWeight");
+        if (weight.equals("")) {
+            tv_weight.setText("--");
+        } else {
+            tv_weight.setText(weight);
+        }
         btn_weight.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -383,12 +400,14 @@ public class FragmentHome extends Fragment {
                     @Override
                     public void onClick(View view) {
                         String weight = editTextWeight.getText().toString();
+                        String email = PreferenceManager.getString(getContext(), "userEmail");
                         if (weight.equals("")) {
                             AlertDialog builder = new AlertDialog.Builder(getContext())
                                     .setMessage("체중을 입력하세요.")
                                     .setPositiveButton("확인", null)
                                     .show();
                         } else {
+                            setWeight(email, weight);
                             tv_weight.setText(weight);
                         }
                         alertDialog.dismiss();
@@ -463,5 +482,37 @@ public class FragmentHome extends Fragment {
         }
 
 
+    }
+
+    private void setWeight(String email, final String weight) {
+        String URL = "http://167.179.103.235/setWeight.php";
+        RequestBody requestBody = new FormBody.Builder()
+                .add("email", email)
+                .add("weight", weight)
+                .build();
+        Request request = new Request.Builder()
+                .url(URL)
+                .post(requestBody)
+                .build();
+        OkHttpClient client = new OkHttpClient();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String output = response.body().string();
+                Log.d("Weight Response", output);
+                boolean success = Boolean.parseBoolean(output);
+                if (success) {
+                    PreferenceManager.setString(getContext(), "petWeight", weight);
+                } else {
+                    Toast.makeText(getContext(), "체중 등록 실패", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 }
