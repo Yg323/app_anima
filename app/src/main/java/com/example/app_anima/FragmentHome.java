@@ -59,7 +59,6 @@ import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
-import okhttp3.Response;
 
 public class FragmentHome extends Fragment {
 
@@ -131,7 +130,7 @@ public class FragmentHome extends Fragment {
         tv_email.setText(PreferenceManager.getString(getContext(), "userEmail"));
 
         String imgpath = PreferenceManager.getString(getContext(), "profileImg");
-        if (imgpath.equals("http://167.179.103.235/null")) {
+        if (imgpath.equals("http://167.179.103.235/NULL")) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 imageViewProfile.setImageDrawable(getActivity().getDrawable(R.drawable.ic_profile));
             }
@@ -410,7 +409,6 @@ public class FragmentHome extends Fragment {
                                     .show();
                         } else {
                             setWeight(email, weight);
-                            tv_weight.setText(weight);
                         }
                         alertDialog.dismiss();
                     }
@@ -495,20 +493,6 @@ public class FragmentHome extends Fragment {
             dog_running_time.setVisibility(View.GONE);
         }
     }
-}
-
-class FoodRequest extends StringRequest {
-    private final static String URL = "http://167.179.103.235/setFood.php";
-    private Map<String, String> map;
-
-    public FoodRequest(int foodType, double kcal, String email, String today, Response.Listener<String> listener) {
-        super(Method.POST, URL, listener, null);
-        map = new HashMap<>();
-        map.put("foodType", String.valueOf(foodType));
-        map.put("kcal", String.valueOf(kcal));
-        map.put("email", email);
-        map.put("today",today);
-    }
 
     private void setWeight(String email, final String weight) {
         String URL = "http://167.179.103.235/setWeight.php";
@@ -527,19 +511,33 @@ class FoodRequest extends StringRequest {
                 e.printStackTrace();
             }
 
-            @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
+            public void onResponse(Call call, okhttp3.Response response) throws IOException {
                 String output = response.body().string();
                 Log.d("Weight Response", output);
                 boolean success = Boolean.parseBoolean(output);
                 if (success) {
                     PreferenceManager.setString(getContext(), "petWeight", weight);
+                    tv_weight.setText(weight);
                 } else {
                     Toast.makeText(getContext(), "체중 등록 실패", Toast.LENGTH_SHORT).show();
                 }
             }
         });
+    }
+}
+
+class FoodRequest extends StringRequest {
+    private final static String URL = "http://167.179.103.235/setFood.php";
+    private Map<String, String> map;
+
+    public FoodRequest(int foodType, double kcal, String email, String today, Response.Listener<String> listener) {
+        super(Method.POST, URL, listener, null);
+        map = new HashMap<>();
+        map.put("foodType", String.valueOf(foodType));
+        map.put("kcal", String.valueOf(kcal));
+        map.put("email", email);
+        map.put("today", today);
     }
 
     @Override

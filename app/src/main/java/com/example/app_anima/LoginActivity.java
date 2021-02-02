@@ -104,6 +104,8 @@ public class LoginActivity extends AppCompatActivity {
                     String petSpecie = jsonObject.getString("specie");
                     String petSex = jsonObject.getString("sex");
                     String petAge = jsonObject.getString("age");
+                    String petWeight = jsonObject.getString("weight");
+                    String imgpath = jsonObject.getString("profile");
 
                     PreferenceManager.setString(LoginActivity.this, "userEmail", userEmail);
                     PreferenceManager.setString(LoginActivity.this, "userPassword", userPassword);
@@ -112,6 +114,8 @@ public class LoginActivity extends AppCompatActivity {
                     PreferenceManager.setString(LoginActivity.this, "petSpecie", petSpecie);
                     PreferenceManager.setString(LoginActivity.this, "petSex", petSex);
                     PreferenceManager.setString(LoginActivity.this, "petAge", petAge);
+                    PreferenceManager.setString(LoginActivity.this, "petWeight", petWeight);
+                    PreferenceManager.setString(LoginActivity.this, "profileImg", "http://167.179.103.235/"+imgpath);
                     PreferenceManager.setBoolean(LoginActivity.this, "autoLogin", true);
 
                     Toast.makeText(LoginActivity.this, "로그인 성공", Toast.LENGTH_SHORT).show();
