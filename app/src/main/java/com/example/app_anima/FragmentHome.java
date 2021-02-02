@@ -130,7 +130,7 @@ public class FragmentHome extends Fragment {
         tv_email.setText(PreferenceManager.getString(getContext(), "userEmail"));
 
         String imgpath = PreferenceManager.getString(getContext(), "profileImg");
-        if (imgpath.equals("http://167.179.103.235/NULL")) {
+        if (imgpath.equals("http://167.179.103.235/null")) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 imageViewProfile.setImageDrawable(getActivity().getDrawable(R.drawable.ic_profile));
             }
