@@ -378,7 +378,7 @@ public class FragmentHome extends Fragment {
         });
 
         String weight = PreferenceManager.getString(getContext(), "petWeight");
-        if (weight.equals("")) {
+        if (weight == null | weight.equals("")) {
             tv_weight.setText("--");
         } else {
             tv_weight.setText(weight);
