@@ -19,6 +19,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RadioButton;
@@ -36,6 +37,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
 
+import com.bumptech.glide.Glide;
 import com.dinuscxj.progressbar.CircleProgressBar;
 
 import java.util.ArrayList;
@@ -45,7 +47,8 @@ import java.util.TimerTask;
 
 public class FragmentHome extends Fragment {
 
-    private TextView tv_calorie, tv_menu, tv_water, tv_temp, tv_bpm, tv_go_jog, tv_run_step, tv_walk_step, tv_rest_time;
+    private TextView tv_calorie, tv_menu, tv_water, tv_temp, tv_bpm, tv_go_jog, tv_run_step, tv_walk_step, tv_rest_time, tv_email, tv_weight;
+    private ImageView imageViewProfile;
     private ListView listView;
     private ScrollView scrollView;
 
@@ -53,7 +56,7 @@ public class FragmentHome extends Fragment {
     private ConstraintLayout dog_running_time;
     private DrawerLayout drawer_ad;
 
-    private ImageButton btn_menu, btn_feedinput, circle_add, circle_minus;
+    private ImageButton btn_menu, btn_feedinput, circle_add, circle_minus, btn_weight;
 
     private final View[] dogContent = new View[8];
     private final String[] dogContentID = {"running_time", "food", "sleep", "weight", "heart", "stress", "water", "body_temperature"};
@@ -86,7 +89,10 @@ public class FragmentHome extends Fragment {
         tv_run_step = viewGroup.findViewById(R.id.tv_run_step);
         tv_walk_step = viewGroup.findViewById(R.id.tv_walk_step);
         tv_rest_time = viewGroup.findViewById(R.id.tv_rest_time);
+        tv_weight = viewGroup.findViewById(R.id.tv_kg);
 
+        tv_email = viewGroup.findViewById(R.id.tv_email);
+        imageViewProfile = viewGroup.findViewById(R.id.profile_image);
         listView = viewGroup.findViewById(R.id.drawer_menulist);
         scrollView = viewGroup.findViewById(R.id.sv_main);
 
@@ -100,9 +106,21 @@ public class FragmentHome extends Fragment {
         btn_menu = viewGroup.findViewById(R.id.btn_menu);
         circle_add = viewGroup.findViewById(R.id.circle_add);
         circle_minus = viewGroup.findViewById(R.id.circle_minus);
+        btn_weight = viewGroup.findViewById(R.id.btn_weight);
 
         viewPager = viewGroup.findViewById(R.id.viewPager);
         circleProgressBar = viewGroup.findViewById(R.id.cpb_circlebar);
+
+        tv_email.setText(PreferenceManager.getString(getContext(), "userEmail"));
+
+        String imgpath = PreferenceManager.getString(getContext(), "profileImg");
+        if (imgpath.equals("http://167.179.103.235/null")) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                imageViewProfile.setImageDrawable(getActivity().getDrawable(R.drawable.ic_profile));
+            }
+        } else {
+            Glide.with(this).load(imgpath).into(imageViewProfile);
+        }
 
         for (int i = 0; i < dogContentID.length; i++) {
             String name = "dog_" + dogContentID[i];
@@ -135,9 +153,8 @@ public class FragmentHome extends Fragment {
             }
         });
 
-
         //drawer 리스트 뷰
-        final String[] items = {"로그아웃"};
+        final String[] items = {"회원정보", "로그아웃"};
         ArrayAdapter adapter = new ArrayAdapter(getContext(), android.R.layout.simple_list_item_1, items);
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(new ListView.OnItemClickListener() {
@@ -146,18 +163,21 @@ public class FragmentHome extends Fragment {
             public void onItemClick(AdapterView parent, View v, int position, long id) {
                 switch (position) {
                     case 0:
+                        Intent userinfo = new Intent(getContext(), UserInfoActivity.class);
+                        startActivity(userinfo);
+                        break;
+                    case 1:
+                        Intent logout = new Intent(getContext(), LoginActivity.class);
+                        startActivity(logout);
                         PreferenceManager.clear(getContext());
-                        Intent intent = new Intent(getActivity(), LoginActivity.class);
-                        startActivity(intent);
                         getActivity().finish();
-
+                        break;
                 }
                 // close drawer.
                 DrawerLayout drawer = viewGroup.findViewById(R.id.drawer);
                 drawer.closeDrawer(Gravity.LEFT);
             }
         });
-
 
         //drawer
         btn_menu.setOnClickListener(new OnClickListener() {
@@ -230,7 +250,7 @@ public class FragmentHome extends Fragment {
             @Override
             public void onClick(View v) {
                 final double curCal;
-                if (tv_calorie.getText().toString() == null) {
+                if (tv_calorie.getText().toString().equals("")) {
                     curCal = 0;
                 } else {
                     curCal = Double.parseDouble(tv_calorie.getText().toString());
@@ -339,6 +359,45 @@ public class FragmentHome extends Fragment {
                         double inputFeed = Double.parseDouble(editTextInputFeed.getText().toString());
                         double finalFeed = inputFeed * calculatedCalorie;
                         tv_calorie.setText(String.format("%.2f", finalFeed + curCal));
+                        alertDialog.dismiss();
+                    }
+                });
+            }
+        });
+
+        btn_weight.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_weight, null, false);
+                builder.setView(view);
+
+                final EditText editTextWeight = view.findViewById(R.id.et_weight);
+                Button btnApply = view.findViewById(R.id.btn_apply);
+                Button btnCancel = view.findViewById(R.id.btn_cancel);
+
+                final AlertDialog alertDialog = builder.create();
+                alertDialog.show();
+
+                btnApply.setOnClickListener(new OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        String weight = editTextWeight.getText().toString();
+                        if (weight.equals("")) {
+                            AlertDialog builder = new AlertDialog.Builder(getContext())
+                                    .setMessage("체중을 입력하세요.")
+                                    .setPositiveButton("확인", null)
+                                    .show();
+                        } else {
+                            tv_weight.setText(weight);
+                        }
+                        alertDialog.dismiss();
+                    }
+                });
+
+                btnCancel.setOnClickListener(new OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
                         alertDialog.dismiss();
                     }
                 });

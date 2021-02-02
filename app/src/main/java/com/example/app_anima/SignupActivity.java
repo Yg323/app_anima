@@ -26,11 +26,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SignupActivity extends AppCompatActivity {
-    private EditText editTextEmail, editTextPassword, editTextPasswordCheck, editTextName;
+    private EditText editTextEmail, editTextPassword, editTextPasswordCheck, editTextName, editTextPetName, editTextSpecie, editTextSex, editTextAge;
     private Button btnApply, btnValidate;
     private ImageButton btnBack;
 
-    private String email, password, passwordCheck, name;
+    private String email, password, passwordCheck, name, petName, specie, sex, age;
     private boolean isValidated;
 
     @Override
@@ -42,6 +42,10 @@ public class SignupActivity extends AppCompatActivity {
         editTextPassword = findViewById(R.id.et_pswd);
         editTextPasswordCheck = findViewById(R.id.et_chkpswd);
         editTextName = findViewById(R.id.et_name);
+        editTextPetName = findViewById(R.id.et_petname);
+        editTextSpecie = findViewById(R.id.et_petspecie);
+        editTextSex = findViewById(R.id.et_petsex);
+        editTextAge = findViewById(R.id.et_petage);
         btnApply = findViewById(R.id.btn_apply);
         btnBack = findViewById(R.id.btn_back);
         btnValidate = findViewById(R.id.btn_validate);
@@ -79,13 +83,19 @@ public class SignupActivity extends AppCompatActivity {
                 password = editTextPassword.getText().toString();
                 passwordCheck = editTextPasswordCheck.getText().toString();
                 name = editTextName.getText().toString();
+                petName = editTextPetName.getText().toString();
+                specie = editTextSpecie.getText().toString();
+                sex = editTextSex.getText().toString();
+                age = editTextAge.getText().toString();
 
                 if (checkNull(email, password, passwordCheck, name)) {
                     if (passwordValidate(password, passwordCheck)) {
                         if (isValidated) {
-                            SignupRequest signupRequest = new SignupRequest(email, password, name, responseListener);
-                            RequestQueue queue = Volley.newRequestQueue(SignupActivity.this);
-                            queue.add(signupRequest);
+                            if (checkPetNull(petName, specie, sex, age)) {
+                                SignupRequest signupRequest = new SignupRequest(email, password, name, petName, specie, sex, age, responseListener);
+                                RequestQueue queue = Volley.newRequestQueue(SignupActivity.this);
+                                queue.add(signupRequest);
+                            }
                         } else {
                             AlertDialog builder = new AlertDialog.Builder(SignupActivity.this)
                                     .setMessage("아이디 중복확인을 진행하세요")
@@ -129,6 +139,35 @@ public class SignupActivity extends AppCompatActivity {
         } else if (name.equals("")) {
             AlertDialog builder = new AlertDialog.Builder(SignupActivity.this)
                     .setMessage("이름을 입력하세요!")
+                    .setPositiveButton("확인", null)
+                    .show();
+            return false;
+        }
+        return true;
+    }
+
+    private boolean checkPetNull(String name, String specie, String sex, String age) {
+        if (name.equals("")) {
+            AlertDialog builder = new AlertDialog.Builder(SignupActivity.this)
+                    .setMessage("반려견 이름을 입력하세요!")
+                    .setPositiveButton("확인", null)
+                    .show();
+            return false;
+        } else if (specie.equals("")) {
+            AlertDialog builder = new AlertDialog.Builder(SignupActivity.this)
+                    .setMessage("종을 입력하세요!")
+                    .setPositiveButton("확인", null)
+                    .show();
+            return false;
+        } else if (sex.equals("")) {
+            AlertDialog builder = new AlertDialog.Builder(SignupActivity.this)
+                    .setMessage("성별을 입력하세요!")
+                    .setPositiveButton("확인", null)
+                    .show();
+            return false;
+        } else if (age.equals("")) {
+            AlertDialog builder = new AlertDialog.Builder(SignupActivity.this)
+                    .setMessage("나이를 입력하세요!")
                     .setPositiveButton("확인", null)
                     .show();
             return false;
@@ -201,13 +240,17 @@ class SignupRequest extends StringRequest {
     private final static String URL = "http://167.179.103.235/signup.php";
     private Map<String, String> map;
 
-    public SignupRequest(String email, String password, String name, Response.Listener<String> listener) {
+    public SignupRequest(String email, String password, String name, String petName, String specie, String sex, String age, Response.Listener<String> listener) {
         super(Method.POST, URL, listener, null);
 
         map = new HashMap<>();
         map.put("email", email);
         map.put("pswd", password);
         map.put("name", name);
+        map.put("petname", petName);
+        map.put("specie", specie);
+        map.put("sex", sex);
+        map.put("age", age);
     }
 
     @Override

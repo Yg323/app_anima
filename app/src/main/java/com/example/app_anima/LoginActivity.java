@@ -100,10 +100,18 @@ public class LoginActivity extends AppCompatActivity {
                     String userEmail = jsonObject.getString("email");
                     String userPassword = jsonObject.getString("pswd");
                     String userName = jsonObject.getString("name");
+                    String petName = jsonObject.getString("petname");
+                    String petSpecie = jsonObject.getString("specie");
+                    String petSex = jsonObject.getString("sex");
+                    String petAge = jsonObject.getString("age");
 
                     PreferenceManager.setString(LoginActivity.this, "userEmail", userEmail);
                     PreferenceManager.setString(LoginActivity.this, "userPassword", userPassword);
                     PreferenceManager.setString(LoginActivity.this, "userName", userName);
+                    PreferenceManager.setString(LoginActivity.this, "petName", petName);
+                    PreferenceManager.setString(LoginActivity.this, "petSpecie", petSpecie);
+                    PreferenceManager.setString(LoginActivity.this, "petSex", petSex);
+                    PreferenceManager.setString(LoginActivity.this, "petAge", petAge);
                     PreferenceManager.setBoolean(LoginActivity.this, "autoLogin", true);
 
                     Toast.makeText(LoginActivity.this, "로그인 성공", Toast.LENGTH_SHORT).show();
