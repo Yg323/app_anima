@@ -24,12 +24,10 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -39,11 +37,18 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.Glide;
 import com.dinuscxj.progressbar.CircleProgressBar;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -84,6 +89,7 @@ public class FragmentHome extends Fragment {
     private boolean load = false;
     private int water_count, walk_step, run_step;
     private String txt_go_jog;
+    private double curCal;
 
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -138,6 +144,9 @@ public class FragmentHome extends Fragment {
             int id = getResources().getIdentifier(name, "id", packName);
             dogContent[i] = viewGroup.findViewById(id);
         }
+
+        curCal = PreferenceManager.getFloat(getContext(), "food_cal");
+        tv_calorie.setText(String.format("%.2f", curCal));
 
         /*Initial Setting*/
         settingData();
@@ -260,28 +269,19 @@ public class FragmentHome extends Fragment {
         btn_feedinput.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                final double curCal;
-                if (tv_calorie.getText().toString().equals("")) {
-                    curCal = 0;
-                } else {
-                    curCal = Double.parseDouble(tv_calorie.getText().toString());
-                }
                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
 
                 View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_food, null, false);
                 builder.setView(view);
 
-                final RadioGroup mRadioGroup;
-                final RadioButton radioButtonFood, radioButtonSnack;
+                final RadioButton radioButtonFood;
                 final EditText editTextInputFeed;
                 final Button btnPlus100, btnPlus10, btnPlus1, btnMinus100, btnMinus10, btnMinus1;
                 final EditText editTextInputCal;
                 final Button btnApply, btnCancel;
                 final boolean isFood;
 
-                mRadioGroup = view.findViewById(R.id.radiocategory);
                 radioButtonFood = view.findViewById(R.id.radiofood);
-                radioButtonSnack = view.findViewById(R.id.radiosnack);
                 editTextInputFeed = view.findViewById(R.id.input_feed);
                 btnPlus100 = view.findViewById(R.id.btn_plus100);
                 btnPlus10 = view.findViewById(R.id.btn_plus10);
@@ -293,13 +293,6 @@ public class FragmentHome extends Fragment {
                 btnApply = view.findViewById(R.id.btn_apply);
                 btnCancel = view.findViewById(R.id.btn_cancel);
 
-                RadioGroup.OnCheckedChangeListener radioGroupButtonChangeListener = new RadioGroup.OnCheckedChangeListener() {
-                    @Override
-                    public void onCheckedChanged(RadioGroup group, @IdRes int checkedId) {
-
-                    }
-                };
-                mRadioGroup.setOnCheckedChangeListener(radioGroupButtonChangeListener);
                 radioButtonFood.setChecked(true);
 
                 final AlertDialog alertDialog = builder.create();
@@ -364,12 +357,21 @@ public class FragmentHome extends Fragment {
                 btnApply.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        int checkedRadio = mRadioGroup.getCheckedRadioButtonId();
+                        int foodType;
+                        if (radioButtonFood.isChecked()) foodType = 0;
+                        else foodType = 1;
                         double inputCalorie = Double.parseDouble(editTextInputCal.getText().toString());
                         double calculatedCalorie = inputCalorie / 100;
                         double inputFeed = Double.parseDouble(editTextInputFeed.getText().toString());
                         double finalFeed = inputFeed * calculatedCalorie;
-                        tv_calorie.setText(String.format("%.2f", finalFeed + curCal));
+                        curCal = finalFeed + curCal;
+                        tv_calorie.setText(String.format("%.2f", curCal));
+                        String email = PreferenceManager.getString(getContext(), "userEmail");
+                        String today = PreferenceManager.getString(getContext(), "date");
+                        FoodRequest foodRequest = new FoodRequest(foodType, finalFeed, email, today, foodResponseListener);
+                        RequestQueue queue = Volley.newRequestQueue(getContext());
+                        queue.add(foodRequest);
+                        PreferenceManager.setFloat(getContext(), "food_cal", (float) curCal);
                         alertDialog.dismiss();
                     }
                 });
@@ -422,10 +424,22 @@ public class FragmentHome extends Fragment {
                 });
             }
         });
-
-
         return viewGroup;
     }
+
+    Response.Listener<String> foodResponseListener = new Response.Listener<String>() {
+        @Override
+        public void onResponse(String response) {
+            Log.d("FoodData Result", response);
+            boolean success = Boolean.parseBoolean(response);
+            if (success) {
+                Log.d("서버 전송","성공");
+
+            } else {
+                Log.d("서버 전송","실패");
+            }
+        }
+    };
 
     @Override
     public void onPause() {
@@ -480,8 +494,20 @@ public class FragmentHome extends Fragment {
         } else {
             dog_running_time.setVisibility(View.GONE);
         }
+    }
+}
 
+class FoodRequest extends StringRequest {
+    private final static String URL = "http://167.179.103.235/setFood.php";
+    private Map<String, String> map;
 
+    public FoodRequest(int foodType, double kcal, String email, String today, Response.Listener<String> listener) {
+        super(Method.POST, URL, listener, null);
+        map = new HashMap<>();
+        map.put("foodType", String.valueOf(foodType));
+        map.put("kcal", String.valueOf(kcal));
+        map.put("email", email);
+        map.put("today",today);
     }
 
     private void setWeight(String email, final String weight) {
@@ -514,5 +540,10 @@ public class FragmentHome extends Fragment {
                 }
             }
         });
+    }
+
+    @Override
+    protected Map<String, String> getParams() throws AuthFailureError {
+        return map;
     }
 }

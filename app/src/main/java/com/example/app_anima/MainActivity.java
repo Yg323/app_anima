@@ -31,11 +31,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -123,6 +119,7 @@ public class MainActivity extends AppCompatActivity {
             setInitData(date);
             PreferenceManager.setInt(this, "water_count", 0);
             PreferenceManager.setString(this, "date", date);
+            PreferenceManager.setFloat(this, "food_cal", 0f);
         }
     }
 
@@ -234,23 +231,15 @@ public class MainActivity extends AppCompatActivity {
     Response.Listener<String> responseListener = new Response.Listener<String>() {
         @Override
         public void onResponse(String response) {
-            try {
-                JSONObject jsonObject = new JSONObject(response);
-                Log.d("Data Result", response);
-                boolean success = jsonObject.getBoolean("success");
 
-                if (success) {
-                    Log.d("서버 전송","성공");
+            Log.d("Data Result", response);
+            boolean success = Boolean.parseBoolean(response);
 
-                } else {
-                    Log.d("서버 전송","실패");
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-                androidx.appcompat.app.AlertDialog builder = new androidx.appcompat.app.AlertDialog.Builder(MainActivity.this)
-                        .setMessage("404 BAD REQUEST")
-                        .setPositiveButton("확인", null)
-                        .show();
+            if (success) {
+                Log.d("서버 전송","성공");
+
+            } else {
+                Log.d("서버 전송","실패");
             }
         }
     };

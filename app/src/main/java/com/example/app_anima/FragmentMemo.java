@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -55,6 +56,7 @@ public class FragmentMemo extends Fragment {
     private SQLiteDatabase db;
 
     private Button btn_day, btn_week;
+    private TextView tv_memo_food;
 
     private Calendar cal;
     private BarChart runChart, waterChart;
@@ -62,7 +64,7 @@ public class FragmentMemo extends Fragment {
     private final String[] timeLabelList = new String[]{"AM12", "AM1", "AM2", "AM3", "AM4", "AM5", "AM6", "AM7", "AM8", "AM9", "AM10", "AM11",
             "PM12", "PM1", "PM2", "PM3", "PM4", "PM5", "PM6", "PM7", "PM8", "PM9", "PM10", "PM11", "AM12"};
 
-    private final String[] waterDays = new String[]{"-","-","-","-","-","-","-"}, weekStepDays = new String[]{"-","-","-","-","-","-","-"};
+    private final String[] waterDays = new String[]{"-", "-", "-", "-", "-", "-", "-"}, weekStepDays = new String[]{"-", "-", "-", "-", "-", "-", "-"};
     private int[] stepSums = new int[24], waterSums = new int[7], weekSteps = new int[7];
     private float[] tempValues = new float[24];
     private int hour;
@@ -76,6 +78,7 @@ public class FragmentMemo extends Fragment {
         runChart = viewGroup.findViewById(R.id.barChart);
         waterChart = viewGroup.findViewById(R.id.barChartWater);
         lineChart = viewGroup.findViewById(R.id.lineChart);
+        tv_memo_food = viewGroup.findViewById(R.id.tv_memo_food);
         btn_day = viewGroup.findViewById(R.id.btn_day);
         btn_week = viewGroup.findViewById(R.id.btn_week);
 
@@ -91,6 +94,7 @@ public class FragmentMemo extends Fragment {
 
         drawDayRunChart();
         drawLineChart();
+        settingFood();
 
         btn_day.setOnClickListener(new OnClickListener() {
             @Override
@@ -114,7 +118,7 @@ public class FragmentMemo extends Fragment {
         super.onStart();
     }
 
-    public void processingStep(){
+    public void processingStep() {
         @SuppressLint("SimpleDateFormat") SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
         String date = format.format(Calendar.getInstance().getTime());
 
@@ -125,11 +129,11 @@ public class FragmentMemo extends Fragment {
             String newDate;
             int stepSum = 0;
 
-            if(i<10) newDate = date + " 0" + i;
+            if (i < 10) newDate = date + " 0" + i;
             else newDate = date + " " + i;
 
-            Cursor cursor = db.rawQuery("SELECT stepcnt FROM steptable WHERE writedate LIKE '"+newDate+"%'", null);
-            while (cursor.moveToNext()){
+            Cursor cursor = db.rawQuery("SELECT stepcnt FROM steptable WHERE writedate LIKE '" + newDate + "%'", null);
+            while (cursor.moveToNext()) {
                 int stepCnt = cursor.getInt(0);
                 stepSum += stepCnt;
             }
@@ -140,7 +144,7 @@ public class FragmentMemo extends Fragment {
 
     }
 
-    public void processingTemp(){
+    public void processingTemp() {
         @SuppressLint("SimpleDateFormat") SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
         String date = format.format(Calendar.getInstance().getTime());
 
@@ -151,18 +155,18 @@ public class FragmentMemo extends Fragment {
             String newDate;
             int cnt = 0;
             float tempSum = (float) 0.00;
-            if(i<10) newDate = date + " 0" + i;
+            if (i < 10) newDate = date + " 0" + i;
             else newDate = date + " " + i;
 
-            Cursor cursor = db.rawQuery("SELECT tempvalue FROM temptable WHERE writedate LIKE '"+newDate+"%'", null);
-            while (cursor.moveToNext()){
+            Cursor cursor = db.rawQuery("SELECT tempvalue FROM temptable WHERE writedate LIKE '" + newDate + "%'", null);
+            while (cursor.moveToNext()) {
                 float tempValue = cursor.getFloat(0);
                 cnt++;
                 tempSum += tempValue;
             }
-            if(cnt == 0){
+            if (cnt == 0) {
                 tempValues[i] = (float) 27.0;
-            }else{
+            } else {
                 tempValues[i] = tempSum / cnt;
             }
 
@@ -171,7 +175,7 @@ public class FragmentMemo extends Fragment {
 
     }
 
-    public void processingWeekStep(){
+    public void processingWeekStep() {
         StepRequest stepRequest = new StepRequest(email, stepResponseListener);
         RequestQueue queue = Volley.newRequestQueue(getContext());
         queue.add(stepRequest);
@@ -179,8 +183,8 @@ public class FragmentMemo extends Fragment {
         weekStepDays[6] = getDateDay(time);
     }
 
-    public void processingWater(){
-        Log.d("processingWater","실행");
+    public void processingWater() {
+        Log.d("processingWater", "실행");
         WaterRequest waterRequest = new WaterRequest(email, waterResponseListener);
         RequestQueue queue = Volley.newRequestQueue(getContext());
         queue.add(waterRequest);
@@ -270,7 +274,7 @@ public class FragmentMemo extends Fragment {
     public void drawLineChart() {
         ArrayList<Entry> entries = new ArrayList<>();
 
-        for (int i = 0; i <= hour ; i++) entries.add(new BarEntry(i, tempValues[i]));
+        for (int i = 0; i <= hour; i++) entries.add(new BarEntry(i, tempValues[i]));
         LineDataSet lineDataSet = new LineDataSet(entries, "label");
         lineDataSet.setColor(Color.RED); //스타일 지정
         lineDataSet.setValueTextColor(Color.BLUE); //스타일 지정
@@ -336,6 +340,12 @@ public class FragmentMemo extends Fragment {
         waterChart.invalidate();
     }
 
+    public void settingFood() {
+        GetFoodRequest getFoodRequest = new GetFoodRequest(email, time, foodResponseListener);
+        RequestQueue queue = Volley.newRequestQueue(getContext());
+        queue.add(getFoodRequest);
+    }
+
     Response.Listener<String> stepResponseListener = new Response.Listener<String>() {
         @Override
         public void onResponse(String response) {
@@ -346,16 +356,16 @@ public class FragmentMemo extends Fragment {
                 JSONArray jsonArray = jsonObject.getJSONArray("data");
 
                 if (success) {
-                    for (int i = 0; i < jsonArray.length() ; i++) {
+                    for (int i = 0; i < jsonArray.length(); i++) {
                         JSONObject jObject = jsonArray.getJSONObject(i);
                         String time = jObject.getString("time");
-                        weekStepDays[5-i] = getDateDay(time);
-                        weekSteps[5-i] = jObject.getInt("cnt_step");
+                        weekStepDays[5 - i] = getDateDay(time);
+                        weekSteps[5 - i] = jObject.getInt("cnt_step");
                     }
                     drawWeekRunChart();
 
                 } else {
-                    Log.d("서버 전송","실패");
+                    Log.d("서버 전송", "실패");
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -372,7 +382,7 @@ public class FragmentMemo extends Fragment {
         public void onResponse(String response) {
             try {
 
-                Log.d("waterResponseListener","실행");
+                Log.d("waterResponseListener", "실행");
 
                 JSONObject jsonObject = new JSONObject(response);
                 Log.d("Water Result", response);
@@ -380,17 +390,68 @@ public class FragmentMemo extends Fragment {
                 JSONArray jsonArray = jsonObject.getJSONArray("data");
 
                 if (success) {
-                    Log.d("water 성공","실행");
-                    for (int i = 0; i < jsonArray.length() ; i++) {
+                    Log.d("water 성공", "실행");
+                    for (int i = 0; i < jsonArray.length(); i++) {
                         JSONObject jObject = jsonArray.getJSONObject(i);
                         String time = jObject.getString("time");
-                        waterDays[5-i] = getDateDay(time);
-                        waterSums[5-i] = jObject.getInt("cnt_water");
+                        waterDays[5 - i] = getDateDay(time);
+                        waterSums[5 - i] = jObject.getInt("cnt_water");
                     }
                     drawWaterChart();
 
                 } else {
-                    Log.d("water 실패","실행");
+                    Log.d("water 실패", "실행");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                androidx.appcompat.app.AlertDialog builder = new androidx.appcompat.app.AlertDialog.Builder(getContext())
+                        .setMessage("404 BAD REQUEST")
+                        .setPositiveButton("확인", null)
+                        .show();
+            }
+        }
+    };
+
+    Response.Listener<String> foodResponseListener = new Response.Listener<String>() {
+        @Override
+        public void onResponse(String response) {
+            try {
+
+                Log.d("foodResponseListener", "실행");
+
+                JSONObject jsonObject = new JSONObject(response);
+                Log.d("Food Result", response);
+                boolean success = jsonObject.getBoolean("success");
+                boolean null_check = jsonObject.getBoolean("null");
+
+                if (success) {
+                    Log.d("Food 성공", "실행");
+                    if (null_check) {
+                        tv_memo_food.setText("아직 섭취한 사료가 없습니다!");
+                    } else {
+                        StringBuilder txt_food = new StringBuilder();
+
+                        JSONArray jsonArray = jsonObject.getJSONArray("data");
+
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            JSONObject jObject = jsonArray.getJSONObject(i);
+                            int foodType = jObject.getInt("food_type");
+                            double kcal = jObject.getDouble("kcal");
+                            if (foodType == 0) {
+                                txt_food.append("사료         " + kcal + "kcal\n");
+                            } else {
+                                txt_food.append("간식         " + kcal + "kcal\n");
+                            }
+                        }
+                        tv_memo_food.setText(txt_food);
+
+                    }
+
+
+                    drawWaterChart();
+
+                } else {
+                    Log.d("Food 실패", "실행");
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -404,8 +465,8 @@ public class FragmentMemo extends Fragment {
 
     public String getDateDay(String currentDate) {
 
-        String dayOfWeek = "" ;
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.KOREAN) ;
+        String dayOfWeek = "";
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.KOREAN);
         Date nDate = null;
         try {
             nDate = dateFormat.parse(currentDate);
@@ -415,34 +476,34 @@ public class FragmentMemo extends Fragment {
 
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(nDate);
-        int dayNum = calendar.get(Calendar.DAY_OF_WEEK) ;
+        int dayNum = calendar.get(Calendar.DAY_OF_WEEK);
 
-        switch(dayNum){
+        switch (dayNum) {
             case 1:
                 dayOfWeek = "일";
-                break ;
+                break;
             case 2:
                 dayOfWeek = "월";
-                break ;
+                break;
             case 3:
                 dayOfWeek = "화";
-                break ;
+                break;
             case 4:
                 dayOfWeek = "수";
-                break ;
+                break;
             case 5:
                 dayOfWeek = "목";
-                break ;
+                break;
             case 6:
                 dayOfWeek = "금";
-                break ;
+                break;
             case 7:
                 dayOfWeek = "토";
-                break ;
+                break;
         }
 
-        Log.d("getDateDay","date: "+currentDate +", "+dayOfWeek+"요일");
-        return dayOfWeek ;
+        Log.d("getDateDay", "date: " + currentDate + ", " + dayOfWeek + "요일");
+        return dayOfWeek;
     }
 }
 
@@ -470,6 +531,23 @@ class StepRequest extends StringRequest {
         super(Method.POST, URL, listener, null);
         map = new HashMap<>();
         map.put("email", email);
+    }
+
+    @Override
+    protected Map<String, String> getParams() throws AuthFailureError {
+        return map;
+    }
+}
+
+class GetFoodRequest extends StringRequest {
+    private final static String URL = "http://167.179.103.235/getFood.php";
+    private Map<String, String> map;
+
+    public GetFoodRequest(String email, String today, Response.Listener<String> listener) {
+        super(Method.POST, URL, listener, null);
+        map = new HashMap<>();
+        map.put("email", email);
+        map.put("today", today);
     }
 
     @Override
