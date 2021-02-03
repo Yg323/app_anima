@@ -103,7 +103,7 @@
                             app:layout_constraintVertical_bias="0.05" />
 
                         <TextView
-                            android:id="@+id/textView"
+                            android:id="@+id/tv_healthsum"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="16dp"
@@ -127,7 +127,7 @@
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintHorizontal_bias="0.0"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@+id/textView">
+                            app:layout_constraintTop_toBottomOf="@+id/tv_healthsum">
 
                             <TableLayout
                                 android:layout_width="match_parent"

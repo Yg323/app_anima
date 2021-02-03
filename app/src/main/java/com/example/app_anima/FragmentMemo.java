@@ -56,7 +56,7 @@ public class FragmentMemo extends Fragment {
     private SQLiteDatabase db;
 
     private Button btn_day, btn_week;
-    private TextView tv_memo_food;
+    private TextView tv_memo_food, tv_stepSum, tv_istoday;
 
     private Calendar cal;
     private BarChart runChart, waterChart;
@@ -68,6 +68,7 @@ public class FragmentMemo extends Fragment {
     private int[] stepSums = new int[24], waterSums = new int[7], weekSteps = new int[7];
     private float[] tempValues = new float[24];
     private int hour;
+    private int sumStep;
     private String email;
     private String time;
 
@@ -79,13 +80,15 @@ public class FragmentMemo extends Fragment {
         waterChart = viewGroup.findViewById(R.id.barChartWater);
         lineChart = viewGroup.findViewById(R.id.lineChart);
         tv_memo_food = viewGroup.findViewById(R.id.tv_memo_food);
+        tv_stepSum = viewGroup.findViewById(R.id.tv_stepSum);
+        tv_istoday = viewGroup.findViewById(R.id.tv_istoday);
         btn_day = viewGroup.findViewById(R.id.btn_day);
         btn_week = viewGroup.findViewById(R.id.btn_week);
 
         email = PreferenceManager.getString(getContext(), "userEmail");
         time = PreferenceManager.getString(getContext(), "date");
         cal = Calendar.getInstance();
-        hour = cal.get(Calendar.HOUR);
+        hour = cal.get(Calendar.HOUR_OF_DAY);
         dbHelper = new DBHelper(getContext());
 
         processingStep();
@@ -100,6 +103,7 @@ public class FragmentMemo extends Fragment {
             @Override
             public void onClick(View v) {
                 drawDayRunChart();
+                tv_istoday.setText("오늘");
             }
         });
 
@@ -107,6 +111,7 @@ public class FragmentMemo extends Fragment {
             @Override
             public void onClick(View v) {
                 processingWeekStep();
+                tv_istoday.setText("이번주");
             }
         });
 
@@ -124,7 +129,7 @@ public class FragmentMemo extends Fragment {
 
         dbHelper = new DBHelper(getContext());
         db = dbHelper.getReadableDatabase();
-
+        sumStep = 0;
         for (int i = 0; i < hour + 1; i++) {
             String newDate;
             int stepSum = 0;
@@ -138,10 +143,11 @@ public class FragmentMemo extends Fragment {
                 stepSum += stepCnt;
             }
             stepSums[i] = stepSum;
+            sumStep += stepSum;
         }
-
         db.close();
-
+        String txt_sum = Integer.toString(sumStep);
+        tv_stepSum.setText(txt_sum);
     }
 
     public void processingTemp() {
@@ -176,11 +182,13 @@ public class FragmentMemo extends Fragment {
     }
 
     public void processingWeekStep() {
+        int steps = PreferenceManager.getInt(getContext(), "run_step") + PreferenceManager.getInt(getContext(), "walk_step");
+        sumStep = steps;
+        weekSteps[6] = steps;
+        weekStepDays[6] = getDateDay(time);
         StepRequest stepRequest = new StepRequest(email, stepResponseListener);
         RequestQueue queue = Volley.newRequestQueue(getContext());
         queue.add(stepRequest);
-        weekSteps[6] = PreferenceManager.getInt(getContext(), "run_step") + PreferenceManager.getInt(getContext(), "walk_step");
-        weekStepDays[6] = getDateDay(time);
     }
 
     public void processingWater() {
@@ -212,7 +220,6 @@ public class FragmentMemo extends Fragment {
         runChart.setDrawGridBackground(false); //격자구조 여부
         runChart.setVisibleXRangeMaximum(25); //x축 표시 범위
         runChart.setHighlightPerTapEnabled(false); //하이라이트 없애기
-        runChart.setTouchEnabled(false); // 그래프 터치햇을때
         runChart.setDoubleTapToZoomEnabled(false); // 더블 탭으로 확대/축소 불가능하게
         runChart.getLegend().setEnabled(false); //차트 범례 설정
 
@@ -368,9 +375,12 @@ public class FragmentMemo extends Fragment {
                             String time = jObject.getString("time");
                             weekStepDays[5 - i] = getDateDay(time);
                             weekSteps[5 - i] = jObject.getInt("cnt_step");
+                            sumStep += weekSteps[5 - i];
                         }
                     }
                     drawWeekRunChart();
+                    String txt_sum = Integer.toString(sumStep);
+                    tv_stepSum.setText(txt_sum);
 
                 } else {
                     Log.d("서버 전송", "실패");

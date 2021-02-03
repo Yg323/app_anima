@@ -62,7 +62,7 @@ import okhttp3.RequestBody;
 
 public class FragmentHome extends Fragment {
 
-    private TextView tv_calorie, tv_menu, tv_water, tv_temp, tv_bpm, tv_go_jog, tv_run_step, tv_walk_step, tv_rest_time, tv_email, tv_weight;
+    private TextView tv_calorie, tv_menu, tv_water, tv_temp, tv_bpm, tv_go_jog, tv_run_step, tv_walk_step, tv_rest_time, tv_email, tv_weight, tv_healthsum;
     private ImageView imageViewProfile;
     private ListView listView;
     private ScrollView scrollView;
@@ -106,6 +106,7 @@ public class FragmentHome extends Fragment {
         tv_walk_step = viewGroup.findViewById(R.id.tv_walk_step);
         tv_rest_time = viewGroup.findViewById(R.id.tv_rest_time);
         tv_weight = viewGroup.findViewById(R.id.tv_kg);
+        tv_healthsum = viewGroup.findViewById(R.id.tv_healthsum);
 
         tv_email = viewGroup.findViewById(R.id.tv_email);
         imageViewProfile = viewGroup.findViewById(R.id.profile_image);
@@ -457,7 +458,14 @@ public class FragmentHome extends Fragment {
         water_count = PreferenceManager.getInt(getContext(), "water_count");
         run_step = PreferenceManager.getInt(getContext(), "run_step");
         walk_step = PreferenceManager.getInt(getContext(), "walk_step");
-
+        int sum_step = run_step + walk_step;
+        double weight_i = 0;
+        String weight = PreferenceManager.getString(getContext(), "petWeight");
+        if (!(weight == null | weight.equals("null"))) {
+            weight_i = Float.parseFloat(weight);
+        }
+        double cal = sum_step * 0.000592 * weight_i;
+        tv_healthsum.setText("오늘의 운동량은 " + String.format("%.3f", cal) + "cal 입니다.");
         tv_water.setText(Integer.toString(water_count));
         tv_temp.setText(String.valueOf(PreferenceManager.getFloat(getContext(), "Temperature")));
         tv_bpm.setText(PreferenceManager.getString(getContext(), "bpm"));
